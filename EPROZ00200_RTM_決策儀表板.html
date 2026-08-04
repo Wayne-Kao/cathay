@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPROZ00200 New Case Application ｜ RTM 決策儀表板</title>
+<style>
+:root{
+  --bg:#0d1424; --bg2:#131c30; --card:#18233c; --card2:#1e2b48;
+  --line:#2a3a5c; --line2:#35486e;
+  --tx:#e8eef9; --tx2:#a9b8d4; --tx3:#7286a8;
+  --accent:#4f8cff; --accent2:#7aa9ff;
+  --green:#2fbf71; --amber:#f0a92c; --red:#ef4d5a; --purple:#a06bff; --cyan:#22c1c3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",-apple-system,"Segoe UI",sans-serif;
+  background:var(--bg); color:var(--tx); font-size:14px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1340px;margin:0 auto;padding:0 28px 72px}
+
+/* ---------- top bar ---------- */
+header{
+  position:sticky;top:0;z-index:60;background:rgba(13,20,36,.92);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+}
+.hd{max-width:1340px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:22px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;letter-spacing:.5px}
+.brand b{font-size:15px;font-weight:700;letter-spacing:.3px}
+.brand span{display:block;font-size:11.5px;color:var(--tx3);font-weight:400;letter-spacing:.2px}
+nav{display:flex;gap:6px;margin-left:auto}
+nav button{
+  font-family:inherit;font-size:13.5px;color:var(--tx2);background:transparent;border:1px solid transparent;
+  padding:8px 18px;border-radius:9px;cursor:pointer;transition:.16s;font-weight:500}
+nav button:hover{color:var(--tx);background:var(--card)}
+nav button.on{color:#fff;background:var(--accent);border-color:var(--accent2);box-shadow:0 4px 16px rgba(79,140,255,.32)}
+.stamp{font-size:11.5px;color:var(--tx3);text-align:right;line-height:1.45;padding-left:16px;border-left:1px solid var(--line)}
+
+/* ---------- page title ---------- */
+.ptitle{padding:34px 0 22px}
+.ptitle h1{font-size:25px;font-weight:700;letter-spacing:.4px}
+.ptitle h1 em{font-style:normal;color:var(--tx3);font-weight:400;font-size:16px;margin-left:10px}
+.ptitle p{color:var(--tx2);font-size:14px;margin-top:6px}
+.ptitle .lead{color:var(--accent2);font-weight:600;font-size:15px;margin-top:2px}
+
+/* ---------- generic card ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px}
+.card h3{font-size:14.5px;font-weight:700;padding:15px 20px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:9px}
+.card h3 small{margin-left:auto;font-weight:400;font-size:12px;color:var(--tx3)}
+.cbody{padding:18px 20px}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr) 1.05fr;gap:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.kpi.ok:before{background:var(--green)} .kpi.warn:before{background:var(--amber)} .kpi.bad:before{background:var(--red)}
+.kpi .lab{font-size:12.5px;color:var(--tx3);letter-spacing:.3px}
+.kpi .val{font-size:42px;font-weight:800;letter-spacing:-1px;line-height:1.12;margin:2px 0 2px}
+.kpi .val small{font-size:17px;font-weight:700;margin-left:2px}
+.kpi .nm{font-size:13.5px;font-weight:600;color:var(--tx)}
+.kpi .sub{font-size:12px;color:var(--tx3);margin-top:5px}
+.kpi .bar{height:5px;border-radius:3px;background:#22304e;margin-top:12px;overflow:hidden}
+.kpi .bar i{display:block;height:100%;border-radius:3px}
+.c-ok{color:var(--green)} .c-warn{color:var(--amber)} .c-bad{color:var(--red)} .c-acc{color:var(--accent2)}
+.b-ok{background:var(--green)} .b-warn{background:var(--amber)} .b-bad{background:var(--red)}
+
+.verdict{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;
+  border:1px solid rgba(239,77,90,.42);background:linear-gradient(150deg,rgba(239,77,90,.14),rgba(239,77,90,.04));
+  border-radius:14px;padding:18px}
+.verdict .tag{font-size:11.5px;letter-spacing:2px;color:var(--tx3)}
+.verdict .big{font-size:27px;font-weight:800;color:var(--red);letter-spacing:1px}
+.verdict .note{font-size:12px;color:var(--tx2);text-align:center;line-height:1.55}
+
+/* ---------- gate rules ---------- */
+.gates{display:grid;gap:10px}
+.gate{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:var(--card2);
+  border:1px solid var(--line)}
+.gate .ic{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;flex:none;color:#0d1424}
+.gate.pass .ic{background:var(--green)} .gate.fail .ic{background:var(--red);color:#fff}
+.gate .txt{font-size:13px}
+.gate .txt b{display:block;font-weight:600}
+.gate .txt span{font-size:11.5px;color:var(--tx3)}
+.gate .num{margin-left:auto;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.gate-final{margin-top:14px;padding:13px 15px;border-radius:10px;font-size:12.8px;color:var(--tx2);
+  background:rgba(239,77,90,.09);border:1px dashed rgba(239,77,90,.4)}
+.gate-final b{color:var(--red)}
+
+/* ---------- condition bars ---------- */
+.crow{display:grid;grid-template-columns:70px 1fr 118px 56px 44px;gap:14px;align-items:center;
+  padding:11px 14px;border-radius:10px;cursor:pointer;transition:.15s;border:1px solid transparent}
+.crow:hover{background:var(--card2);border-color:var(--line2)}
+.crow .cid{font-size:12px;font-weight:700;color:var(--tx3);font-variant-numeric:tabular-nums}
+.crow .cnm{font-size:13.2px;display:flex;align-items:center;gap:8px;min-width:0}
+.crow .cnm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.track{height:8px;border-radius:5px;background:#22304e;overflow:hidden;position:relative}
+.track i{display:block;height:100%;border-radius:5px}
+.crow .cnt{font-size:12px;color:var(--tx3);text-align:right;font-variant-numeric:tabular-nums}
+.crow .pct{font-size:13px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);
+  padding:4px 14px 0;margin-left:calc(70px + 14px)}
+
+/* ---------- tags ---------- */
+.tg{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.4px;
+  padding:2px 8px;border-radius:20px;border:1px solid;white-space:nowrap;line-height:1.7}
+.tg-h{color:#ff8a93;border-color:rgba(239,77,90,.5);background:rgba(239,77,90,.13)}
+.tg-m{color:#ffc861;border-color:rgba(240,169,44,.5);background:rgba(240,169,44,.13)}
+.tg-l{color:#6fe0a4;border-color:rgba(47,191,113,.45);background:rgba(47,191,113,.12)}
+.tg-ai{color:#c3a3ff;border-color:rgba(160,107,255,.5);background:rgba(160,107,255,.14)}
+.tg-hu{color:#7fd6d8;border-color:rgba(34,193,195,.45);background:rgba(34,193,195,.12)}
+.tg-p{color:#6fe0a4;border-color:rgba(47,191,113,.45);background:rgba(47,191,113,.12)}
+.tg-f{color:#ff8a93;border-color:rgba(239,77,90,.5);background:rgba(239,77,90,.13)}
+.tg-n{color:var(--tx3);border-color:var(--line2);background:rgba(114,134,168,.1)}
+.tg-req{color:var(--accent2);border-color:rgba(79,140,255,.45);background:rgba(79,140,255,.12)}
+
+/* ---------- defects ---------- */
+.def{display:flex;gap:12px;padding:12px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--line);
+  margin-bottom:9px;cursor:pointer;transition:.15s}
+.def:hover{border-color:var(--line2)}
+.def .dl{width:3px;border-radius:2px;flex:none}
+.def .did{font-size:11.5px;font-weight:700;color:var(--tx3);font-variant-numeric:tabular-nums}
+.def .dt{font-size:13px;font-weight:600;margin:1px 0 3px}
+.def .dm{font-size:11.8px;color:var(--tx3)}
+
+/* ---------- flow ---------- */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;text-align:center}
+.fnode{padding:14px 10px;position:relative}
+.fnode:not(:last-child):after{content:"";position:absolute;right:-7px;top:50%;transform:translateY(-50%);
+  width:14px;height:2px;background:var(--line2)}
+.fnode .fv{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.fnode .fl{font-size:12px;color:var(--tx3);margin-top:1px}
+.fnode .fs{font-size:11px;color:var(--tx3);margin-top:5px}
+
+/* ---------- filters ---------- */
+.filters{display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:14px 18px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;margin-bottom:18px}
+.fgrp{display:flex;align-items:center;gap:7px}
+.fgrp>b{font-size:11.5px;color:var(--tx3);font-weight:600;letter-spacing:.5px}
+.chip{font-family:inherit;font-size:12px;color:var(--tx2);background:var(--card2);border:1px solid var(--line);
+  padding:5px 12px;border-radius:18px;cursor:pointer;transition:.15s;font-weight:500}
+.chip:hover{border-color:var(--line2);color:var(--tx)}
+.chip.on{background:var(--accent);border-color:var(--accent2);color:#fff;font-weight:600}
+.chip.on.risk-H{background:var(--red);border-color:#ff8a93}
+.chip.on.risk-M{background:var(--amber);border-color:#ffc861;color:#1a1206}
+.chip.on.risk-L{background:var(--green);border-color:#6fe0a4;color:#06180f}
+.search{font-family:inherit;font-size:12.5px;color:var(--tx);background:var(--card2);border:1px solid var(--line);
+  padding:6px 12px;border-radius:8px;width:210px;outline:none}
+.search:focus{border-color:var(--accent)}
+.fstat{margin-left:auto;font-size:12px;color:var(--tx3)}
+.fstat b{color:var(--tx)}
+.linkbtn{font-family:inherit;font-size:12px;color:var(--accent2);background:transparent;border:1px solid var(--line2);
+  padding:5px 12px;border-radius:8px;cursor:pointer}
+.linkbtn:hover{border-color:var(--accent);color:#fff}
+
+/* ---------- mindmap ---------- */
+.mapwrap{overflow:auto;padding:6px 4px 10px}
+#mindmap{display:block}
+.mm-node{cursor:pointer}
+.mm-box{transition:.15s}
+.mm-node:hover .mm-box{stroke:var(--accent2)}
+.mm-t{font-size:12px;fill:var(--tx);font-family:inherit;font-weight:600}
+.mm-s{font-size:10.5px;fill:var(--tx3);font-family:inherit}
+.mm-pct{font-size:11px;font-weight:800;font-family:inherit;font-variant-numeric:tabular-nums}
+.mm-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--tx3);padding:2px 20px 16px}
+.mm-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* ---------- nested list ---------- */
+.cat{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden;background:var(--card)}
+.cat-h{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;background:var(--card2)}
+.cat-h:hover{background:#22304e}
+.cat-h .ar{font-size:10px;color:var(--tx3);transition:.2s;width:10px}
+.cat-h.open .ar{transform:rotate(90deg)}
+.cat-h .nm{font-size:14px;font-weight:700}
+.cat-h .id{font-size:11px;color:var(--tx3);font-weight:600}
+.cat-h .mini{margin-left:auto;display:flex;align-items:center;gap:14px}
+.mini .mt{width:110px}
+.mini .mv{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;width:46px;text-align:right}
+.mini .mc{font-size:11.5px;color:var(--tx3);font-variant-numeric:tabular-nums}
+.cat-b{display:none;padding:8px 12px 12px}
+.cat-b.open{display:block}
+
+.cond{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:var(--bg2);overflow:hidden}
+.cond.hi{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,140,255,.22)}
+.cond-h{display:flex;align-items:center;gap:11px;padding:11px 14px;cursor:pointer}
+.cond-h:hover{background:var(--card2)}
+.cond-h .ar{font-size:10px;color:var(--tx3);transition:.2s;width:10px}
+.cond-h.open .ar{transform:rotate(90deg)}
+.cond-h .cid{font-size:11.5px;font-weight:700;color:var(--tx3);width:58px;flex:none}
+.cond-h .ct{font-size:13.2px;font-weight:600}
+.cond-h .mini{margin-left:auto}
+.cond-b{display:none;padding:2px 14px 14px 58px}
+.cond-b.open{display:block}
+.cmeta{font-size:12px;color:var(--tx2);background:var(--card2);border:1px solid var(--line);border-radius:8px;
+  padding:10px 13px;margin:6px 0 10px;display:grid;grid-template-columns:74px 1fr;gap:5px 12px}
+.cmeta dt{color:var(--tx3);font-size:11.5px}
+.cmeta dd{font-size:12.2px}
+
+table.cases{width:100%;border-collapse:collapse;font-size:12.4px}
+table.cases th{text-align:left;font-size:11px;color:var(--tx3);font-weight:600;letter-spacing:.4px;
+  padding:7px 10px;border-bottom:1px solid var(--line)}
+table.cases td{padding:9px 10px;border-bottom:1px solid rgba(42,58,92,.55);vertical-align:top}
+table.cases tr:last-child td{border-bottom:none}
+table.cases tr:hover td{background:rgba(30,43,72,.55)}
+table.cases td.k{font-weight:700;color:var(--tx3);font-size:11.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.cases td.gwt{color:var(--tx2);font-size:11.8px;line-height:1.55}
+table.cases td.gwt b{color:var(--tx3);font-weight:600}
+.empty{padding:14px;border:1px dashed rgba(239,77,90,.45);border-radius:9px;background:rgba(239,77,90,.07);
+  font-size:12.4px;color:#ffb3b9}
+.empty b{color:#ff8a93}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(6,10,20,.62);opacity:0;pointer-events:none;transition:.22s;z-index:80}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(720px,94vw);background:var(--bg2);
+  border-left:1px solid var(--line2);transform:translateX(100%);transition:.26s cubic-bezier(.4,0,.2,1);
+  z-index:90;overflow-y:auto;box-shadow:-20px 0 60px rgba(0,0,0,.45)}
+.drawer.on{transform:none}
+.dr-h{position:sticky;top:0;background:var(--bg2);border-bottom:1px solid var(--line);padding:18px 24px;z-index:2}
+.dr-h .top{display:flex;align-items:flex-start;gap:12px}
+.dr-h h2{font-size:17px;font-weight:700;line-height:1.4}
+.dr-h .sub{font-size:12px;color:var(--tx3);margin-top:2px}
+.dr-h .x{margin-left:auto;background:var(--card2);border:1px solid var(--line);color:var(--tx2);
+  width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;flex:none;font-family:inherit}
+.dr-h .x:hover{color:#fff;border-color:var(--line2)}
+.dr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.dr-b{padding:20px 24px 40px}
+.dstat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.dstat div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+.dstat b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.dstat span{font-size:11px;color:var(--tx3)}
+.dsec{font-size:12.5px;font-weight:700;color:var(--tx2);margin:16px 0 8px;letter-spacing:.4px;
+  display:flex;align-items:center;gap:8px}
+.dsec:before{content:"";width:3px;height:13px;background:var(--accent);border-radius:2px}
+.footnote{font-size:11.5px;color:var(--tx3);margin-top:26px;padding-top:14px;border-top:1px solid var(--line);line-height:1.7}
+.hide{display:none!important}
+@media(max-width:1080px){.kpis{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="brand">
+      <div class="logo">RTM</div>
+      <div>
+        <b>EPROZ00200 New Case Application</b>
+        <span>CDC-EPRO-0001 ｜ 需求追溯矩陣與品質閘門</span>
+      </div>
+    </div>
+    <nav>
+      <button id="nav-dash" class="on" onclick="go('dash')">決策儀表板</button>
+      <button id="nav-rtm" onclick="go('rtm')">RTM 覆蓋總覽</button>
+    </nav>
+    <div class="stamp">
+      規格版本 v1.1 ／ 2026-06-08<br>
+      測試批次 EPROZ00200-R3 ／ 2026-08-04 09:20
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ============ PAGE 1 ============ -->
+  <section id="page-dash">
+    <div class="ptitle">
+      <h1>決策儀表板<em>EPROZ00200 New Case Application</em></h1>
+      <p class="lead">放行與否，讓數據說話</p>
+      <p>需求 → 測試條件 → 測試案例的覆蓋率與通過率，作為是否補強測試案例或核可上線的判斷依據。</p>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-top:16px" class="g2">
+      <div class="card">
+        <h3>測試條件通過率<small>共 13 條測試條件 ／ 點擊任一列檢視測試案例明細</small></h3>
+        <div class="cbody" style="padding:10px 8px 14px">
+          <div id="condbars"></div>
+          <div class="axis"><span>0</span><span>50</span><span>100%</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>放行規則（事先議定）</h3>
+        <div class="cbody">
+          <div class="gates" id="gates"></div>
+          <div class="gate-final" id="gatefinal"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1.25fr;gap:16px;margin-top:16px" class="g2">
+      <div class="card">
+        <h3>追溯鏈路完整度<small>RTM Traceability</small></h3>
+        <div class="cbody">
+          <div class="flow" id="flow"></div>
+          <div style="margin-top:14px;font-size:12px;color:var(--tx3);border-top:1px solid var(--line);padding-top:12px">
+            REQ-006 Copy Matrix 的 CU 續約／變更條件尚未展開測試案例，追溯鏈在此中斷，為覆蓋率未達 95% 的唯一缺口。
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>未解缺陷<small>依風險等級排序 ／ 點擊檢視關聯測試案例</small></h3>
+        <div class="cbody" id="defects"></div>
+      </div>
+    </div>
+
+    <p class="footnote">
+      資料來源：業務需求導向的功能規格書 CDC-EPRO-0001 v1.1（2026/06/08）第 4、5、8 章，
+      對應測試條件由規格驗收條件展開，測試案例由 AI 依測試條件產生並經 QA 審核，
+      人工補充案例標示為「人工設計」。所有執行結果取自測試批次 EPROZ00200-R3。
+    </p>
+  </section>
+
+  <!-- ============ PAGE 2 ============ -->
+  <section id="page-rtm" class="hide">
+    <div class="ptitle">
+      <h1>RTM 覆蓋總覽<em>測試條件分類 → 測試條件 → 測試案例</em></h1>
+      <p>上方為覆蓋結構總覽，下方為巢狀明細；篩選條件同時套用於兩者。</p>
+    </div>
+
+    <div class="filters">
+      <div class="fgrp"><b>風險</b>
+        <button class="chip risk-H" data-f="risk" data-v="H">高</button>
+        <button class="chip risk-M" data-f="risk" data-v="M">中</button>
+        <button class="chip risk-L" data-f="risk" data-v="L">低</button>
+      </div>
+      <div class="fgrp"><b>案例來源</b>
+        <button class="chip" data-f="src" data-v="AI">AI 產生</button>
+        <button class="chip" data-f="src" data-v="HU">人工設計</button>
+      </div>
+      <div class="fgrp"><b>執行結果</b>
+        <button class="chip" data-f="res" data-v="P">通過</button>
+        <button class="chip" data-f="res" data-v="F">未通過</button>
+        <button class="chip" data-f="res" data-v="N">未覆蓋</button>
+      </div>
+      <div class="fgrp">
+        <input class="search" id="q" placeholder="搜尋條件／案例／需求編號…" oninput="render2()">
+        <button class="linkbtn" onclick="clearF()">清除</button>
+        <button class="linkbtn" onclick="expandAll()">全部展開</button>
+        <button class="linkbtn" onclick="collapseAll()">全部收合</button>
+      </div>
+      <div class="fstat" id="fstat"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h3>覆蓋結構總覽<small>節點顏色代表風險等級，底線比例代表測試案例通過率</small></h3>
+      <div class="mapwrap"><svg id="mindmap"></svg></div>
+      <div class="mm-legend">
+        <span><i style="background:var(--red)"></i>高風險條件</span>
+        <span><i style="background:var(--amber)"></i>中風險條件</span>
+        <span><i style="background:var(--green)"></i>低風險條件</span>
+        <span><i style="background:#22304e;border:1px solid var(--line2)"></i>尚未覆蓋</span>
+        <span>｜ 節點下方數字為「通過／案例數」，點擊節點可展開下方對應明細</span>
+      </div>
+    </div>
+
+    <div id="nested"></div>
+
+    <p class="footnote">
+      測試條件由功能規格書第 4 章業務需求與第 8 章驗收條件展開；每一測試案例均回溯至唯一需求編號，
+      未能回溯的案例不納入覆蓋率計算。風險等級由 QA 依交易一致性、資料正確性與法遵影響評定。
+    </p>
+  </section>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeDr()"></div>
+<aside class="drawer" id="drawer"><div id="drin"></div></aside>
+
+<!-- DATA -->
+<script>
+/* ===== 需求（RTM 左端） ===== */
+const REQS = {
+  'REQ-001':'初始化：進入頁面清除前次案件 session，並載入 LOAN_TYPE 與 MTG_PRODUCT 共用代碼。',
+  'REQ-002':'Product／Loan Type 規則：依 Housing Loan、Staff Housing Loan、Staff Vehicle Loan 與 Other 判斷允許的 loan type。',
+  'REQ-003':'Reference Search：依姓名、證件號碼、案號、生日與 attribute 查詢符合資格之參考案件。',
+  'REQ-004':'Execute 建案：後端重新驗證 attribute 與必填欄位，並寫入 summary、history、checkpoint 與 page menu。',
+  'REQ-005':'Application Number：以 EPRO_TB_APP_NO_SEQ 產生唯一案號，格式為 branchId + deptCode + yyyyMM + APP_TYPE + LON_TYPE_CODE + 4 碼序號。',
+  'REQ-006':'Copy Matrix：依 attribute 與案件類型執行 formateAdd／formateAddRenew 八個分支的資料複製。',
+  'REQ-007':'Copy Data Rules：地址代碼補零、CR_DEL 重設、擔保品檔案欄位清空與工作收入欄位排除。',
+  'NFR-TX' :'交易與回滾：建案與複製須在同一交易完成，任一失敗須完整回滾並回傳可識別錯誤。'
+};
+
+/* ===== 缺陷 ===== */
+const DEFECTS = [
+  {id:'DEF-001',risk:'H',title:'複製交易失敗後未完整回滾，殘留新案 summary 與 checkpoint',
+   detail:'擔保品或保證人 insert 失敗時，先前已寫入的 EPRO_TB_LON_SUMMARY_INFO 與 checkpoint 未一併回滾，導致產生無法進入後續頁籤的半套案件。',
+   tc:'TC-012',cases:['CASE-012-02','CASE-012-03','CASE-012-05'],owner:'RD',ref:'TBD-004 / 5.2 Transaction'},
+  {id:'DEF-002',risk:'H',title:'併發建案時 APP_NO_SEQ 取號重複，產生相同 APPLICATION_NO',
+   detail:'同一 APP_GEN_DATE + APP_TYPE + LON_TYPE_CODE 於 20 執行緒並行下出現 2 筆重複案號，現行 update／insert sequence 未具備 row lock。',
+   tc:'TC-013',cases:['CASE-013-01'],owner:'RD',ref:'TBD-003 / REQ-005 併發'},
+  {id:'DEF-003',risk:'M',title:'擔保品估價與現場勘查檔案路徑未於複製時清空',
+   detail:'複製參考案件擔保品時，valuation 與 site visit 的 file path／file name 沿用原案件值，違反 REQ-007 檔案欄位清空規則。',
+   tc:'TC-010',cases:['CASE-010-10','CASE-010-11'],owner:'RD',ref:'REQ-007 Collateral file fields'},
+  {id:'DEF-004',risk:'M',title:'保證人複製後 CR_DEL 未重設為 N',
+   detail:'active 保證人資料複製至新案時保留原 CR_DEL 值，造成新案保證人於後續頁籤被視為已刪除。',
+   tc:'TC-010',cases:['CASE-010-07'],owner:'RD',ref:'REQ-007 Guarantor / provider'},
+  {id:'DEF-005',risk:'L',title:'地址 commune／village 代碼未左補零',
+   detail:'複製地址時 province 與 district 已正規化，commune 與 village 仍為原始長度，影響地址比對與報表輸出。',
+   tc:'TC-010',cases:['CASE-010-12'],owner:'RD',ref:'REQ-007 Address'},
+  {id:'DEF-006',risk:'M',title:'CU 案件 checkpoint 排除頁面與規格不一致',
+   detail:'CU direct add 建立的 checkpoint 少排除 1 個頁面，page menu 出現不應開放的頁籤，排除清單需由 SA 定案。',
+   tc:'TC-006',cases:['CASE-006-12'],owner:'SA / RD',ref:'TBD-007 / REQ-004 步驟 4'}
+];
+
+/* ===== 分類 → 測試條件 → 測試案例 ===== */
+const CATS = [
+{id:'CAT-01',name:'初始化與代碼載入',desc:'進入功能、session 清除與下拉代碼取得',conds:[
+  {id:'TC-001',name:'進入功能並清除前次案件 session',risk:'L',reqs:['REQ-001'],
+   given:'使用者進入 New Case Application。',when:'呼叫 prompt 與 initQuery。',then:'頁面初始化並取得 loan type 與 MTG product code map。',
+   db:'session 內無舊 APPLICATION_NO。',cases:[
+   {id:'CASE-001-01',t:'prompt 清除前次案件 session',g:'session 內存在前次 APPLICATION_NO EPRO0102026061S020001。',w:'呼叫 GET /api/eproz0-0200/prompt。',th:'回應成功且 session 內 APPLICATION_NO 為空。',src:'AI',res:'P'},
+   {id:'CASE-001-02',t:'initQuery 回傳 LOAN_TYPE 與 MTG_PRODUCT 代碼',g:'共用代碼檔已載入。',w:'呼叫 GET /api/eproz0-0200/initQuery。',th:'回傳 lonTypeMap 與 mtgProductMap，且兩者皆非空集合。',src:'AI',res:'P'},
+   {id:'CASE-001-03',t:'重新進入功能後畫面欄位回復預設值',g:'使用者已在畫面選取過 Customer Type 與 Product Type。',w:'重新由選單進入本功能。',th:'Customer Type、Product Type、Sub-Product Type、Loan Type 皆回復未選取狀態。',src:'HU',res:'P'}
+  ]},
+  {id:'TC-002',name:'依產品子類取得允許的 Loan Type',risk:'L',reqs:['REQ-002'],
+   given:'使用者已選定 attribute 與 product code。',when:'呼叫 getLoanType。',then:'僅回傳該產品子類允許的 loan type。',
+   db:'無 DB 異動。',cases:[
+   {id:'CASE-002-01',t:'Housing Loan 僅回傳 01／02／04',g:'Individual + Secured + PRODUCT_CODE=02。',w:'呼叫 POST /api/eproz0-0200/getLoanType。',th:'lonTypeMap 僅含 01、02、04 三個代碼。',src:'AI',res:'P'},
+   {id:'CASE-002-02',t:'Staff Housing Loan 回傳 91／92／94／01／02／04',g:'Individual + Secured + PRODUCT_CODE=03。',w:'呼叫 getLoanType。',th:'lonTypeMap 含 91、92、94、01、02、04 共 6 個代碼。',src:'AI',res:'P'},
+   {id:'CASE-002-03',t:'Staff Vehicle Loan 回傳 91／92／94／01／02／04',g:'Individual + Unsecured + PRODUCT_CODE=01。',w:'呼叫 getLoanType。',th:'lonTypeMap 含 91、92、94、01、02、04 共 6 個代碼。',src:'AI',res:'P'},
+   {id:'CASE-002-04',t:'不符合三項規則時回傳全部 Loan Type',g:'Corporate + Secured + PRODUCT_CODE=05。',w:'呼叫 getLoanType。',th:'回傳共用代碼檔中全部 LOAN_TYPE 選項。',src:'HU',res:'P'}
+  ]},
+  {id:'TC-003',name:'MTG Product 顯示與必填規則',risk:'L',reqs:['REQ-002'],
+   given:'使用者切換 Customer Type、Product Type 與 Sub-Product Type。',when:'畫面重新載入 product 區塊。',then:'MTG Product 僅在 Individual + Secured + PRODUCT_CODE=01 時顯示且必填。',
+   db:'無 DB 異動。',cases:[
+   {id:'CASE-003-01',t:'房貸情境顯示 MTG Product 且為必填',g:'Individual + Secured + PRODUCT_CODE=01。',w:'選取 Sub-Product Type 後檢視畫面。',th:'MTG Product 下拉顯示，未選取時無法送出 execute。',src:'AI',res:'P'},
+   {id:'CASE-003-02',t:'切換產品後 MTG Product 隱藏並清空值',g:'已選 PRODUCT_CODE=01 並選定 MTG Product。',w:'將 Sub-Product Type 改為 02。',th:'MTG Product 區塊隱藏，送出時 mtgProductCode 為空。',src:'AI',res:'P'},
+   {id:'CASE-003-03',t:'Corporate + Unsecured 強制 PRODUCT_CODE=01 且不顯示 MTG Product',g:'Corporate + Unsecured。',w:'呼叫 getProduct 並檢視畫面。',th:'Sub-Product Type 固定為 01，MTG Product 不顯示。',src:'HU',res:'P'}
+  ]}
+]},
+{id:'CAT-02',name:'輸入驗證與權限把關',desc:'必填欄位、參考案件必填與後端重驗',conds:[
+  {id:'TC-004',name:'必填欄位驗證與後端重新驗證',risk:'M',reqs:['REQ-004'],
+   given:'使用者未完整填寫必填欄位。',when:'呼叫 execute。',then:'回傳 400 validation error 並附對應 error code。',
+   db:'不得新增 sequence、summary 或 history。',cases:[
+   {id:'CASE-004-01',t:'Customer Type 空白回傳 MISSING_LON_ATTRIBUTE',g:'lonAttribute 未填，其餘欄位完整。',w:'呼叫 POST /api/eproz0-0200/execute。',th:'HTTP 400，error code MISSING_LON_ATTRIBUTE。',src:'AI',res:'P'},
+   {id:'CASE-004-02',t:'Product Type 空白回傳 MISSING_SECURE_ATTRIBUTE',g:'secureAttribute 未填。',w:'呼叫 execute。',th:'HTTP 400，error code MISSING_SECURE_ATTRIBUTE。',src:'AI',res:'P'},
+   {id:'CASE-004-03',t:'Sub-Product Type 空白回傳 MISSING_PRODUCT_CODE',g:'productCode 未填。',w:'呼叫 execute。',th:'HTTP 400，error code MISSING_PRODUCT_CODE。',src:'AI',res:'P'},
+   {id:'CASE-004-04',t:'Loan Type 空白回傳 MISSING_LON_TYPE_CODE',g:'lonTypeCode 未填。',w:'呼叫 execute。',th:'HTTP 400，error code MISSING_LON_TYPE_CODE。',src:'AI',res:'P'},
+   {id:'CASE-004-05',t:'房貸情境未選 MTG Product 回傳驗證錯誤',g:'Individual + Secured + PRODUCT_CODE=01，mtgProductCode 未填。',w:'呼叫 execute。',th:'HTTP 400 並回傳 MTG product 必填訊息。',src:'AI',res:'P'},
+   {id:'CASE-004-06',t:'前端阻擋送出並顯示欄位錯誤訊息',g:'畫面未選 Loan Type。',w:'點擊 Execute 按鈕。',th:'前端阻擋送出並於欄位旁顯示必填訊息，未發出 API 請求。',src:'HU',res:'P'},
+   {id:'CASE-004-07',t:'竄改 hidden 欄位仍被後端擋下',g:'以工具將 lonAttribute 改為不存在的值 X。',w:'直接呼叫 execute。',th:'HTTP 400，後端不採信前端傳入值並回傳驗證錯誤。',src:'HU',res:'P'},
+   {id:'CASE-004-08',t:'驗證失敗不得產生任何案件資料',g:'必填欄位不完整。',w:'呼叫 execute。',th:'EPRO_TB_APP_NO_SEQ、LON_SUMMARY_INFO、APP_HISTORY 皆無新增資料。',src:'AI',res:'P'}
+  ]},
+  {id:'TC-005',name:'需參考案件之 Loan Type 必填檢核',risk:'M',reqs:['REQ-004','REQ-003'],
+   given:'loan type 為 02／03／04 但未選取參考案件。',when:'呼叫 execute。',then:'回傳 MISSING_REF_APPLICATION_NO。',
+   db:'不得新增新案資料。',cases:[
+   {id:'CASE-005-01',t:'Loan Type 02 未選參考案件被擋下',g:'lonTypeCode=02，refApplicationNo 為空。',w:'呼叫 execute。',th:'HTTP 400，error code MISSING_REF_APPLICATION_NO。',src:'AI',res:'P'},
+   {id:'CASE-005-02',t:'Loan Type 03 未選參考案件被擋下',g:'lonTypeCode=03，refApplicationNo 為空。',w:'呼叫 execute。',th:'HTTP 400，error code MISSING_REF_APPLICATION_NO。',src:'AI',res:'P'},
+   {id:'CASE-005-03',t:'Loan Type 04 未選參考案件被擋下',g:'lonTypeCode=04，refApplicationNo 為空。',w:'呼叫 execute。',th:'HTTP 400，error code MISSING_REF_APPLICATION_NO。',src:'AI',res:'P'},
+   {id:'CASE-005-04',t:'Loan Type 01 不需參考案件即可建案',g:'lonTypeCode=01，refApplicationNo 為空，其餘欄位完整。',w:'呼叫 execute。',th:'HTTP 200 並回傳新 APPLICATION_NO。',src:'AI',res:'P'}
+  ]}
+]},
+{id:'CAT-03',name:'參考案件查詢',desc:'個人／公司既有案件與 revised item 查詢',conds:[
+  {id:'TC-007',name:'個人參考案件查詢',risk:'M',reqs:['REQ-003'],
+   given:'使用者輸入姓名或證件號碼。',when:'呼叫 query。',then:'回傳符合資格的個人參考案件。',
+   db:'僅包含 CASE_PROGRESS 08／09／14 或 APP_CON_TYPE 不為空之案件。',cases:[
+   {id:'CASE-007-01',t:'依申請人姓名查詢主借款人案件',g:'applyName 輸入既有主借款人姓名。',w:'呼叫 POST /api/eproz0-0200/query。',th:'dataList 回傳該借款人所有符合資格案件。',src:'AI',res:'P'},
+   {id:'CASE-007-02',t:'依證件號碼比對五類文件欄位',g:'docNo 為共同借款人的 resident card 號碼。',w:'呼叫 query。',th:'passport、id、family book、resident card、visa 五類欄位皆納入比對並回傳案件。',src:'AI',res:'P'},
+   {id:'CASE-007-03',t:'以案號查詢時 docNo 必填',g:'applicationNo 已填但 docNo 為空。',w:'呼叫 query。',th:'回傳驗證錯誤並提示 docNo 必填。',src:'AI',res:'P'},
+   {id:'CASE-007-04',t:'不符資格案件不得出現在查詢結果',g:'存在 CASE_PROGRESS=03 且 APP_CON_TYPE 為空的案件。',w:'以相同姓名呼叫 query。',th:'dataList 不含該案件。',src:'HU',res:'P'}
+  ]},
+  {id:'TC-008',name:'公司參考案件查詢與部門範圍限制',risk:'M',reqs:['REQ-003'],
+   given:'使用者輸入公司登記號碼。',when:'呼叫 query。',then:'回傳符合資格的公司參考案件並受部門範圍限制。',
+   db:'查詢主公司與共同借款公司 register no。',cases:[
+   {id:'CASE-008-01',t:'依主公司 register no 查詢',g:'docNo 為主借款公司登記號碼。',w:'呼叫 query。',th:'回傳該公司符合資格的案件清單。',src:'AI',res:'P'},
+   {id:'CASE-008-02',t:'比對共同借款公司 register no',g:'docNo 僅存在於共同借款公司。',w:'呼叫 query。',th:'仍可回傳主案件，來源標示為共同借款公司。',src:'AI',res:'P'},
+   {id:'CASE-008-03',t:'未指定案號時以登入者部門限制查詢範圍',g:'登入者 dept code 為 A01，資料庫另有 B02 部門同名案件。',w:'不填 applicationNo 呼叫 query。',th:'dataList 僅含 A01 部門案件。',src:'HU',res:'P'}
+  ]},
+  {id:'TC-009',name:'Revised item 參考案件查詢',risk:'M',reqs:['REQ-003'],
+   given:'使用者輸入姓名與生日。',when:'呼叫 query2。',then:'回傳 revised item 顯示文字或 NA。',
+   db:'ITEM1 至 ITEM14 對應顯示正確。',cases:[
+   {id:'CASE-009-01',t:'依姓名與生日查詢 revised item 案件',g:'applyName 與 dateOfBirth 皆已輸入。',w:'呼叫 POST /api/eproz0-0200/query2。',th:'dataList 回傳符合條件案件並附 revisedItemStr。',src:'AI',res:'P'},
+   {id:'CASE-009-02',t:'ITEM1 至 ITEM14 轉換為顯示文字',g:'參考案件已勾選 ITEM2、ITEM7 與 ITEM14。',w:'呼叫 query2。',th:'revisedItemStr 依序顯示三項對應中文名稱。',src:'AI',res:'P'},
+   {id:'CASE-009-03',t:'無 revised item 時顯示 NA',g:'參考案件 ITEM1 至 ITEM14 皆未勾選。',w:'呼叫 query2。',th:'revisedItemStr 顯示 NA。',src:'AI',res:'P'}
+  ]}
+]},
+{id:'CAT-04',name:'建案與案號產生',desc:'Direct add 全流程、案號規則與併發取號',conds:[
+  {id:'TC-006',name:'Direct Add 建立新案件',risk:'H',reqs:['REQ-004','REQ-005'],
+   given:'符合 direct add 條件且欄位完整。',when:'呼叫 execute。',then:'產生新 APPLICATION_NO 並回傳第一個業務頁代碼。',
+   db:'APP_NO_SEQ 遞增，summary、history、checkpoint 新增。',cases:[
+   {id:'CASE-006-01',t:'IS direct add 建立新案',g:'Individual + Secured，loan type 01，欄位完整。',w:'呼叫 execute。',th:'HTTP 200，回傳 APPLICATION_NO 與第一頁代碼。',src:'AI',res:'P'},
+   {id:'CASE-006-02',t:'IU direct add 建立新案',g:'Individual + Unsecured，loan type 01。',w:'呼叫 execute。',th:'HTTP 200，APP_TYPE 為 IU。',src:'AI',res:'P'},
+   {id:'CASE-006-03',t:'CS direct add 建立新案',g:'Corporate + Secured，loan type 01。',w:'呼叫 execute。',th:'HTTP 200，APP_TYPE 為 CS。',src:'AI',res:'P'},
+   {id:'CASE-006-04',t:'CU direct add 建立新案',g:'Corporate + Unsecured，loan type 01。',w:'呼叫 execute。',th:'HTTP 200，APP_TYPE 為 CU。',src:'AI',res:'P'},
+   {id:'CASE-006-05',t:'APPLICATION_NO 組成規則正確',g:'branchId=EPRO、deptCode=01、系統日期 2026/08。',w:'呼叫 execute。',th:'案號為 branchId + deptCode + 202608 + APP_TYPE + LON_TYPE_CODE + 4 碼序號共 19 碼。',src:'AI',res:'P'},
+   {id:'CASE-006-06',t:'APP_GEN_DATE 以 yyyyMM 格式寫入',g:'系統日期 2026/08/04。',w:'呼叫 execute。',th:'EPRO_TB_APP_NO_SEQ.APP_GEN_DATE 為 202608。',src:'AI',res:'P'},
+   {id:'CASE-006-07',t:'相同組合連續建案序號遞增',g:'相同 APP_GEN_DATE、APP_TYPE、LON_TYPE_CODE 已有序號 0007。',w:'再次呼叫 execute。',th:'MAX_SEQ 更新為 0008 且案號結尾為 0008。',src:'AI',res:'P'},
+   {id:'CASE-006-08',t:'新案 CASE_PROGRESS 初始為 01',g:'欄位完整的建案請求。',w:'呼叫 execute。',th:'EPRO_TB_LON_SUMMARY_INFO.CASE_PROGRESS 為 01。',src:'AI',res:'P'},
+   {id:'CASE-006-09',t:'summary 寫入分行、部門與建案人員',g:'登入者 branch EPRO、dept 01、user AO0231。',w:'呼叫 execute。',th:'summary 的 branch、dept 與 AO_CODE 與登入者一致。',src:'AI',res:'P'},
+   {id:'CASE-006-10',t:'application history 寫入 APP_PROCESS_CODE=01',g:'欄位完整的建案請求。',w:'呼叫 execute。',th:'EPRO_TB_APP_HISTORY 新增 1 筆，APP_PROCESS_CODE 為 01 且 processor 正確。',src:'AI',res:'P'},
+   {id:'CASE-006-11',t:'依 attribute 建立對應 checkpoint',g:'IS 建案請求。',w:'呼叫 execute。',th:'checkpoint 筆數與 IS 頁面清單一致。',src:'AI',res:'P'},
+   {id:'CASE-006-12',t:'CU 案件排除指定 checkpoint 頁面',g:'CU 建案請求。',w:'呼叫 execute 後檢視 page menu。',th:'checkpoint 應排除規格指定的頁面清單。',src:'HU',res:'F',def:'DEF-006',
+    actual:'page menu 仍出現 1 個應排除頁面，checkpoint 筆數較規格多 1 筆。'},
+   {id:'CASE-006-13',t:'回傳第一個可進入的業務頁代碼',g:'IS 建案請求。',w:'呼叫 execute。',th:'response.page 為該 attribute 的第一個業務頁代碼。',src:'AI',res:'P'},
+   {id:'CASE-006-14',t:'新案號寫入 session',g:'建案成功。',w:'檢視後續請求的 session。',th:'session 內 APPLICATION_NO 為新產生案號。',src:'AI',res:'P'},
+   {id:'CASE-006-15',t:'direct add 於同一交易完成',g:'將 checkpoint insert 設為失敗。',w:'呼叫 execute。',th:'summary 與 history 一併回滾，資料庫無新案資料。',src:'HU',res:'P'}
+  ]},
+  {id:'TC-013',name:'併發建案案號唯一性',risk:'H',reqs:['REQ-005'],
+   given:'多筆請求同時建立相同 APP_GEN_DATE／APP_TYPE／LON_TYPE_CODE 案件。',when:'並行呼叫 execute。',then:'各筆 APPLICATION_NO 不重複。',
+   db:'APP_NO_SEQ 無跳號或重複。',cases:[
+   {id:'CASE-013-01',t:'20 執行緒並行建案案號不重複',g:'20 個相同組合的建案請求。',w:'同時呼叫 execute。',th:'20 筆 APPLICATION_NO 皆唯一。',src:'AI',res:'F',def:'DEF-002',
+    actual:'20 筆結果中出現 2 組重複案號，重複率 10%。'},
+   {id:'CASE-013-02',t:'併發後序號連續無跳號',g:'併發建案完成。',w:'查詢 EPRO_TB_APP_NO_SEQ。',th:'MAX_SEQ 等於成功建案筆數且序號連續。',src:'AI',res:'P'},
+   {id:'CASE-013-03',t:'序號衝突回傳 409',g:'以壓力測試觸發 EPRO_TB_APP_NO_SEQ 更新衝突。',w:'呼叫 execute。',th:'HTTP 409，error code APPLICATION_NO_SEQUENCE_CONFLICT。',src:'AI',res:'P'}
+  ]}
+]},
+{id:'CAT-05',name:'參考案件資料複製',desc:'追加、續約與變更案件的 copy matrix',conds:[
+  {id:'TC-010',name:'IS 追加案件複製參考案件資料',risk:'H',reqs:['REQ-006','REQ-007'],
+   given:'IS 追加案件已選取參考案件。',when:'呼叫 execute。',then:'建立新案並依 formateAdd_IS 複製資料。',
+   db:'借款人、保證人、擔保品資料複製且排除欄位已清空。',cases:[
+   {id:'CASE-010-01',t:'主借款人資料複製至新案',g:'參考案件含主借款人資料。',w:'呼叫 execute。',th:'新 APPLICATION_NO 下主借款人欄位與參考案件一致。',src:'AI',res:'P'},
+   {id:'CASE-010-02',t:'共同借款人資料複製',g:'參考案件含 2 位共同借款人。',w:'呼叫 execute。',th:'新案共同借款人筆數為 2 且序號重編正確。',src:'AI',res:'P'},
+   {id:'CASE-010-03',t:'工作與收入資料複製',g:'參考案件含工作資料。',w:'呼叫 execute。',th:'雇主、職稱與工作地址複製至新案。',src:'AI',res:'P'},
+   {id:'CASE-010-04',t:'年資與月收入欄位依規則排除',g:'參考案件 CURRENT_JOB_YEAR=5、GROSS_M_INCOME=1200。',w:'呼叫 execute。',th:'新案 CURRENT_JOB_YEAR、CURRENT_JOB_MONTH、GROSS_M_INCOME 皆為空。',src:'AI',res:'P'},
+   {id:'CASE-010-05',t:'家庭資料複製',g:'參考案件含配偶與扶養人資料。',w:'呼叫 execute。',th:'家庭資料完整複製且筆數一致。',src:'AI',res:'P'},
+   {id:'CASE-010-06',t:'僅複製 active 保證人',g:'參考案件含 3 位保證人，其中 1 位已刪除。',w:'呼叫 execute。',th:'新案僅有 2 位保證人。',src:'AI',res:'P'},
+   {id:'CASE-010-07',t:'保證人複製後 CR_DEL 重設為 N',g:'參考案件保證人 CR_DEL 為 Y 與 N 混合。',w:'呼叫 execute。',th:'新案所有複製後保證人 CR_DEL 皆為 N。',src:'AI',res:'F',def:'DEF-004',
+    actual:'2 筆保證人 CR_DEL 沿用參考案件值 Y，於後續頁籤無法顯示。'},
+   {id:'CASE-010-08',t:'複製 active 擔保品',g:'參考案件含 2 筆有效擔保品。',w:'呼叫 execute。',th:'新案擔保品筆數為 2 且主要欄位一致。',src:'AI',res:'P'},
+   {id:'CASE-010-09',t:'已刪除擔保品序號不複製至關聯表',g:'參考案件含 1 筆已刪除擔保品且有關聯資料。',w:'呼叫 execute。',th:'新案擔保品關聯表不含該序號資料。',src:'AI',res:'P'},
+   {id:'CASE-010-10',t:'擔保品估價檔案欄位複製時清空',g:'參考案件擔保品含 valuation file path 與 file name。',w:'呼叫 execute。',th:'新案該兩欄位為空。',src:'AI',res:'F',def:'DEF-003',
+    actual:'valuation file path 與 file name 沿用參考案件值。'},
+   {id:'CASE-010-11',t:'現場勘查檔案欄位複製時清空',g:'參考案件擔保品含 site visit file path 與 file name。',w:'呼叫 execute。',th:'新案該兩欄位為空。',src:'AI',res:'F',def:'DEF-003',
+    actual:'site visit file path 與 file name 沿用參考案件值。'},
+   {id:'CASE-010-12',t:'地址代碼複製後左補零正規化',g:'參考案件地址 province=1、district=23、commune=4、village=5。',w:'呼叫 execute。',th:'四層代碼皆補零至規定長度。',src:'AI',res:'F',def:'DEF-005',
+    actual:'province 與 district 已補零，commune 與 village 維持原長度。'},
+   {id:'CASE-010-13',t:'新案 summary 寫入參考案號',g:'IS 追加建案請求。',w:'呼叫 execute。',th:'summary.REF_APPLICATION_NO 等於所選參考案件案號。',src:'AI',res:'P'},
+   {id:'CASE-010-14',t:'追加案件同時建立 checkpoint',g:'IS 追加建案請求。',w:'呼叫 execute。',th:'checkpoint 與 page menu 依 IS 規則建立。',src:'AI',res:'P'},
+   {id:'CASE-010-15',t:'參考案件版本 02.00 之後的欄位對應',g:'參考案件 version 為 02.11。',w:'呼叫 execute。',th:'依 02.11 對應表複製欄位，無欄位錯置。',src:'HU',res:'P'},
+   {id:'CASE-010-16',t:'複製筆數與參考案件一致',g:'參考案件各表筆數已統計。',w:'呼叫 execute 後比對新案。',th:'各表複製筆數與參考案件 active 筆數相符。',src:'HU',res:'P'}
+  ]},
+  {id:'TC-011',name:'CU 續約／變更案件建立與 checkpoint 排除',risk:'H',reqs:['REQ-006'],
+   given:'CU 續約或變更案件已選取參考案件。',when:'呼叫 execute。',then:'建立 CU 新案並套用續約排除欄位與 CU checkpoint 排除。',
+   db:'summary、history、checkpoint、page menu 與各 copy table 正確。',
+   blocked:'formateAddRenew_CU 的逐表逐欄複製矩陣（TBD-004）與 CU checkpoint 排除頁面的業務原因（TBD-007）尚未定案，測試案例無法展開。',
+   cases:[]}
+]},
+{id:'CAT-06',name:'交易一致性與回滾',desc:'複製交易失敗處理與逾時回滾',conds:[
+  {id:'TC-012',name:'複製交易失敗時完整回滾',risk:'H',reqs:['NFR-TX'],
+   given:'複製過程中任一 insert 失敗。',when:'呼叫 execute。',then:'回傳錯誤並完整回滾。',
+   db:'不得留下半套新 APPLICATION_NO 資料。',cases:[
+   {id:'CASE-012-01',t:'借款人 insert 失敗時完整回滾',g:'將借款人 insert 設為失敗。',w:'呼叫 execute。',th:'資料庫無新案 summary、history 與 checkpoint。',src:'AI',res:'P'},
+   {id:'CASE-012-02',t:'擔保品 insert 失敗時完整回滾',g:'將擔保品 insert 設為失敗。',w:'呼叫 execute。',th:'資料庫無新案任何資料。',src:'AI',res:'F',def:'DEF-001',
+    actual:'summary 與 checkpoint 已寫入且未回滾，殘留 CASE_PROGRESS=01 的空案件。'},
+   {id:'CASE-012-03',t:'保證人 insert 失敗時完整回滾',g:'將保證人 insert 設為失敗。',w:'呼叫 execute。',th:'資料庫無新案任何資料。',src:'AI',res:'F',def:'DEF-001',
+    actual:'summary 已寫入且未回滾，借款人資料殘留 3 筆。'},
+   {id:'CASE-012-04',t:'checkpoint insert 失敗時完整回滾',g:'將 checkpoint insert 設為失敗。',w:'呼叫 execute。',th:'summary 與 history 一併回滾。',src:'AI',res:'P'},
+   {id:'CASE-012-05',t:'交易逾時時回滾並回傳可識別錯誤',g:'複製資料量超過交易 timeout 設定。',w:'呼叫 execute。',th:'交易回滾且回傳可識別的逾時錯誤碼。',src:'HU',res:'F',def:'DEF-001',
+    actual:'逾時後回傳一般性 500 錯誤，且新案 summary 未回滾。'},
+   {id:'CASE-012-06',t:'複製失敗回傳 COPY_REFERENCE_DATA_FAILED',g:'複製過程發生資料庫錯誤。',w:'呼叫 execute。',th:'HTTP 500，error code COPY_REFERENCE_DATA_FAILED。',src:'AI',res:'P'}
+  ]}
+]}
+];
+</script>
+<!-- APP -->
+<script>
+/* ================= 統計 ================= */
+const ALLC = CATS.flatMap(c=>c.conds.map(x=>Object.assign({cat:c},x)));
+const CBY = {}; ALLC.forEach(c=>CBY[c.id]=c);
+const st = c=>{const n=c.cases.length,p=c.cases.filter(x=>x.res==='P').length;
+  return {n,p,f:n-p,pct:n?Math.round(p/n*1000)/10:0};};
+const RISKN={H:'高',M:'中',L:'低'}, RISKC={H:'var(--red)',M:'var(--amber)',L:'var(--green)'},
+      RISKT={H:'tg-h',M:'tg-m',L:'tg-l'};
+const TOT = (()=>{ let n=0,p=0,cov=0;
+  ALLC.forEach(c=>{const s=st(c);n+=s.n;p+=s.p;if(s.n>0)cov++;});
+  const hi=ALLC.filter(c=>c.risk==='H'), hiCov=hi.filter(c=>st(c).n>0).length;
+  let hn=0,hp=0; hi.forEach(c=>{const s=st(c);hn+=s.n;hp+=s.p;});
+  return {cases:n,pass:p,fail:n-p,conds:ALLC.length,cov,
+    covPct:Math.round(cov/ALLC.length*1000)/10,
+    passPct:Math.round(p/n*1000)/10,
+    hiN:hi.length,hiCov,hiCovPct:Math.round(hiCov/hi.length*1000)/10,
+    hiCasePct:Math.round(hp/hn*1000)/10,hiCaseN:hn,hiCaseP:hp,
+    ai:ALLC.flatMap(c=>c.cases).filter(x=>x.src==='AI').length,
+    hu:ALLC.flatMap(c=>c.cases).filter(x=>x.src==='HU').length,
+    defH:DEFECTS.filter(d=>d.risk==='H').length};
+})();
+const esc=s=>String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+const cls=p=>p>=95?'ok':p>=80?'warn':'bad';
+
+/* ================= 導覽 ================= */
+function go(p){
+  document.getElementById('page-dash').classList.toggle('hide',p!=='dash');
+  document.getElementById('page-rtm').classList.toggle('hide',p!=='rtm');
+  document.getElementById('nav-dash').classList.toggle('on',p==='dash');
+  document.getElementById('nav-rtm').classList.toggle('on',p==='rtm');
+  window.scrollTo({top:0});
+}
+
+/* ================= 首頁 ================= */
+function renderDash(){
+  document.getElementById('kpis').innerHTML=`
+   <div class="kpi ${cls(TOT.covPct)}">
+     <div class="lab">RTM 覆蓋</div>
+     <div class="val c-${cls(TOT.covPct)}">${TOT.covPct}<small>%</small></div>
+     <div class="nm">測試條件覆蓋率</div>
+     <div class="sub">${TOT.conds} 條中 ${TOT.cov} 條已有案例並執行</div>
+     <div class="bar"><i class="b-${cls(TOT.covPct)}" style="width:${TOT.covPct}%"></i></div>
+   </div>
+   <div class="kpi ${cls(TOT.passPct)}">
+     <div class="lab">執行結果</div>
+     <div class="val c-${cls(TOT.passPct)}">${TOT.passPct}<small>%</small></div>
+     <div class="nm">測試案例通過率</div>
+     <div class="sub">${TOT.cases} 案例：${TOT.pass} 通過 ｜ ${TOT.fail} 未過</div>
+     <div class="bar"><i class="b-${cls(TOT.passPct)}" style="width:${TOT.passPct}%"></i></div>
+   </div>
+   <div class="kpi ${TOT.defH?'bad':'ok'}">
+     <div class="lab">缺陷</div>
+     <div class="val ${TOT.defH?'c-bad':'c-ok'}">${TOT.defH}</div>
+     <div class="nm">高風險未解缺陷</div>
+     <div class="sub">${DEFECTS.filter(d=>d.risk==='H').map(d=>d.id).join(' ／ ')}</div>
+     <div class="bar"><i class="b-bad" style="width:100%"></i></div>
+   </div>
+   <div class="verdict">
+     <div class="tag">放 行 判 定</div>
+     <div class="big">未達放行標準</div>
+     <div class="note">三項放行規則有 3 項未達標<br>需先修復 DEF-001 並定案 TBD-003</div>
+   </div>`;
+
+  const gates=[
+    {n:'高風險未解缺陷 ＝ 0',s:'目前 '+TOT.defH+' 項（DEF-001、DEF-002）',v:TOT.defH,ok:TOT.defH===0,fmt:v=>v},
+    {n:'風險覆蓋率 ≥ 95%',s:'高風險測試條件 '+TOT.hiCov+'／'+TOT.hiN+' 已展開案例',v:TOT.hiCovPct,ok:TOT.hiCovPct>=95,fmt:v=>v+'%'},
+    {n:'高優先案例通過率 ≥ 98%',s:'高風險條件案例 '+TOT.hiCaseP+'／'+TOT.hiCaseN+' 通過',v:TOT.hiCasePct,ok:TOT.hiCasePct>=98,fmt:v=>v+'%'}
+  ];
+  document.getElementById('gates').innerHTML=gates.map(g=>`
+    <div class="gate ${g.ok?'pass':'fail'}">
+      <div class="ic">${g.ok?'✓':'✕'}</div>
+      <div class="txt"><b>${g.n}</b><span>${g.s}</span></div>
+      <div class="num ${g.ok?'c-ok':'c-bad'}">${g.fmt(g.v)}</div>
+    </div>`).join('');
+  document.getElementById('gatefinal').innerHTML=
+    `三項全達標亮綠燈，核可後上 UAT。目前判定為<b>未達標</b>：高風險缺陷 ${TOT.defH} ＞ 0、`+
+    `風險覆蓋率 ${TOT.hiCovPct}% ＜ 95%、高優先通過率 ${TOT.hiCasePct}% ＜ 98%。`;
+
+  const sorted=[...ALLC].sort((a,b)=>{const A=st(a),B=st(b);
+    if(A.n===0&&B.n>0)return -1; if(B.n===0&&A.n>0)return 1; return A.pct-B.pct;});
+  document.getElementById('condbars').innerHTML=sorted.map(c=>{const s=st(c);
+    const col=s.n===0?'var(--line2)':s.pct>=95?'var(--green)':s.pct>=75?'var(--amber)':'var(--red)';
+    return `<div class="crow" onclick="openCond('${c.id}')">
+      <div class="cid">${c.id}</div>
+      <div class="cnm"><span title="${esc(c.name)}">${esc(c.name)}</span>
+        <span class="tg ${RISKT[c.risk]}">${RISKN[c.risk]}風險</span></div>
+      <div class="track"><i style="width:${s.n?s.pct:100}%;background:${col};${s.n?'':'opacity:.35'}"></i></div>
+      <div class="cnt">${s.n?s.p+'／'+s.n:'未覆蓋'}</div>
+      <div class="pct" style="color:${s.n?col:'var(--tx3)'}">${s.n?s.pct+'%':'—'}</div>
+    </div>`;}).join('');
+
+  document.getElementById('flow').innerHTML=`
+    <div class="fnode"><div class="fv c-acc">${Object.keys(REQS).length}</div><div class="fl">需求項目</div>
+      <div class="fs">全部已展開測試條件</div></div>
+    <div class="fnode"><div class="fv">${TOT.conds}</div><div class="fl">測試條件</div>
+      <div class="fs">${TOT.hiN} 高 ／ ${ALLC.filter(c=>c.risk==='M').length} 中 ／ ${ALLC.filter(c=>c.risk==='L').length} 低</div></div>
+    <div class="fnode"><div class="fv c-${cls(TOT.covPct)}">${TOT.cov}</div><div class="fl">已覆蓋條件</div>
+      <div class="fs">TC-011 尚未展開案例</div></div>
+    <div class="fnode"><div class="fv">${TOT.cases}</div><div class="fl">測試案例</div>
+      <div class="fs">AI 產生 ${TOT.ai} ／ 人工設計 ${TOT.hu}</div></div>`;
+
+  document.getElementById('defects').innerHTML=DEFECTS.map(d=>`
+    <div class="def" onclick="openDef('${d.id}')">
+      <div class="dl" style="background:${RISKC[d.risk]}"></div>
+      <div style="min-width:0">
+        <div class="did">${d.id} ｜ ${d.tc} ｜ 負責 ${d.owner}</div>
+        <div class="dt">${esc(d.title)}</div>
+        <div class="dm">關聯案例 ${d.cases.length} 筆 ｜ ${esc(d.ref)}</div>
+      </div>
+      <span class="tg ${RISKT[d.risk]}" style="align-self:flex-start;margin-left:auto">${RISKN[d.risk]}</span>
+    </div>`).join('');
+}
+
+/* ================= 抽屜 ================= */
+function caseRows(cases){
+  if(!cases.length)return '';
+  return `<table class="cases"><thead><tr><th style="width:104px">案例編號</th><th>案例內容</th>
+    <th style="width:118px">標籤</th></tr></thead><tbody>`+cases.map(c=>`
+    <tr><td class="k">${c.id}</td>
+      <td><div style="font-weight:600;margin-bottom:4px">${esc(c.t)}</div>
+        <div class="gwt"><b>Given</b> ${esc(c.g)}<br><b>When</b> ${esc(c.w)}<br><b>Then</b> ${esc(c.th)}</div>
+        ${c.res==='F'?`<div class="gwt" style="margin-top:5px;color:#ff8a93"><b style="color:#ff8a93">實際結果</b> ${esc(c.actual||'')} ｜ ${c.def}</div>`:''}</td>
+      <td><span class="tg ${c.src==='AI'?'tg-ai':'tg-hu'}">${c.src==='AI'?'AI 產生':'人工設計'}</span>
+        <span class="tg ${c.res==='P'?'tg-p':'tg-f'}" style="margin-top:4px">${c.res==='P'?'通過':'未通過'}</span></td>
+    </tr>`).join('')+'</tbody></table>';
+}
+function openCond(id){
+  const c=CBY[id],s=st(c);
+  document.getElementById('drin').innerHTML=`
+  <div class="dr-h"><div class="top"><div>
+    <h2>${c.id} ${esc(c.name)}</h2>
+    <div class="sub">${c.cat.id} ${esc(c.cat.name)} ｜ 對應需求 ${c.reqs.join('、')}</div></div>
+    <button class="x" onclick="closeDr()">✕</button></div>
+    <div class="dr-tags"><span class="tg ${RISKT[c.risk]}">${RISKN[c.risk]}風險</span>
+      ${c.reqs.map(r=>`<span class="tg tg-req">${r}</span>`).join('')}
+      <span class="tg ${s.n===0?'tg-n':s.f?'tg-f':'tg-p'}">${s.n===0?'尚未覆蓋':s.f?s.f+' 項未通過':'全數通過'}</span></div>
+  </div>
+  <div class="dr-b">
+    <div class="dstat">
+      <div><b>${s.n}</b><span>測試案例</span></div>
+      <div><b class="c-ok">${s.p}</b><span>通過</span></div>
+      <div><b class="${s.f?'c-bad':''}">${s.f}</b><span>未通過</span></div>
+      <div><b class="c-${s.n?cls(s.pct):'bad'}">${s.n?s.pct+'%':'—'}</b><span>通過率</span></div>
+    </div>
+    <div class="dsec">測試條件</div>
+    <dl class="cmeta">
+      <dt>Given</dt><dd>${esc(c.given)}</dd>
+      <dt>When</dt><dd>${esc(c.when)}</dd>
+      <dt>Then</dt><dd>${esc(c.then)}</dd>
+      <dt>DB 驗證點</dt><dd>${esc(c.db)}</dd>
+    </dl>
+    <div class="dsec">來源需求</div>
+    ${c.reqs.map(r=>`<div style="font-size:12.3px;color:var(--tx2);margin-bottom:6px">
+      <span class="tg tg-req">${r}</span> ${esc(REQS[r])}</div>`).join('')}
+    <div class="dsec">測試案例（${s.n}）</div>
+    ${s.n?caseRows(c.cases):`<div class="empty"><b>此測試條件尚未展開測試案例。</b><br>${esc(c.blocked||'')}
+      <br><br>影響：RTM 覆蓋率由 100% 降為 ${TOT.covPct}%，風險覆蓋率 ${TOT.hiCovPct}% 未達 95% 放行標準。
+      建議於 TBD 定案後補齊案例再重新評估放行。</div>`}
+    <div style="margin-top:20px"><button class="linkbtn" onclick="closeDr();go('rtm');focusCond('${c.id}')">
+      在 RTM 覆蓋總覽中檢視此條件</button></div>
+  </div>`;
+  showDr();
+}
+function openDef(id){
+  const d=DEFECTS.find(x=>x.id===id),c=CBY[d.tc];
+  const cs=c.cases.filter(x=>d.cases.includes(x.id));
+  document.getElementById('drin').innerHTML=`
+  <div class="dr-h"><div class="top"><div>
+    <h2>${d.id} ${esc(d.title)}</h2>
+    <div class="sub">來源條件 ${d.tc} ${esc(c.name)} ｜ 負責 ${d.owner}</div></div>
+    <button class="x" onclick="closeDr()">✕</button></div>
+    <div class="dr-tags"><span class="tg ${RISKT[d.risk]}">${RISKN[d.risk]}風險</span>
+      <span class="tg tg-f">未解</span>${c.reqs.map(r=>`<span class="tg tg-req">${r}</span>`).join('')}</div></div>
+  <div class="dr-b">
+    <div class="dsec">缺陷描述</div>
+    <div style="font-size:12.8px;color:var(--tx2);line-height:1.75">${esc(d.detail)}</div>
+    <div style="margin-top:10px;font-size:12px;color:var(--tx3)">規格依據：${esc(d.ref)}</div>
+    <div class="dsec">關聯測試案例（${cs.length}）</div>
+    ${caseRows(cs)}
+    <div style="margin-top:20px"><button class="linkbtn" onclick="openCond('${d.tc}')">檢視測試條件 ${d.tc}</button></div>
+  </div>`;
+  showDr();
+}
+function showDr(){document.getElementById('drawer').classList.add('on');document.getElementById('scrim').classList.add('on');}
+function closeDr(){document.getElementById('drawer').classList.remove('on');document.getElementById('scrim').classList.remove('on');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDr();});
+
+/* ================= 篩選 ================= */
+const F={risk:new Set(),src:new Set(),res:new Set()};
+document.querySelectorAll('.chip[data-f]').forEach(b=>b.onclick=()=>{
+  const s=F[b.dataset.f]; s.has(b.dataset.v)?s.delete(b.dataset.v):s.add(b.dataset.v);
+  b.classList.toggle('on'); render2();});
+function clearF(){Object.values(F).forEach(s=>s.clear());
+  document.querySelectorAll('.chip[data-f]').forEach(b=>b.classList.remove('on'));
+  document.getElementById('q').value=''; render2();}
+function caseOk(c){
+  if(F.src.size&&!F.src.has(c.src))return false;
+  if(F.res.size&&!(F.res.has(c.res==='P'?'P':'F')))return false;
+  return true;
+}
+function model(){
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  const wantN=F.res.has('N'), onlyN=F.res.size===1&&wantN;
+  return CATS.map(cat=>{
+    const conds=cat.conds.map(c=>{
+      if(F.risk.size&&!F.risk.has(c.risk))return null;
+      let cs=c.cases.filter(caseOk);
+      if(onlyN) cs=[];
+      if(F.res.size&&!c.cases.length&&!wantN)return null;
+      if((F.src.size||(F.res.size&&!onlyN))&&c.cases.length&&!cs.length)return null;
+      if(onlyN&&c.cases.length)return null;
+      if(q){
+        const hay=(c.id+c.name+c.reqs.join()+c.given+c.when+c.then).toLowerCase();
+        const hit=hay.includes(q)||cs.some(x=>(x.id+x.t+x.g+x.w+x.th).toLowerCase().includes(q))
+          ||cat.name.toLowerCase().includes(q);
+        if(!hit)return null;
+        if(!hay.includes(q)&&!cat.name.toLowerCase().includes(q))
+          cs=cs.filter(x=>(x.id+x.t+x.g+x.w+x.th).toLowerCase().includes(q));
+      }
+      return Object.assign({},c,{vis:cs,cat});
+    }).filter(Boolean);
+    return conds.length?Object.assign({},cat,{conds}):null;
+  }).filter(Boolean);
+}
+
+/* ================= 心智圖 ================= */
+function drawMap(M){
+  const NS='http://www.w3.org/2000/svg', svg=document.getElementById('mindmap');
+  svg.innerHTML='';
+  const RW=150,CW=176,DW=316,H=42,GAP=11,X0=8,X1=X0+RW+58,X2=X1+CW+58;
+  let y=0; const rows=[];
+  M.forEach(cat=>{const s=y; cat.conds.forEach(c=>{rows.push({cat,c,y}); y+=H+GAP;});
+    cat._y=(s+y-GAP-H)/2;});
+  const total=Math.max(y-GAP,H), W=X2+DW+10;
+  svg.setAttribute('width',W); svg.setAttribute('height',total+20);
+  svg.setAttribute('viewBox',`0 0 ${W} ${total+20}`);
+  const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  const path=(x1,y1,x2,y2,col)=>svg.appendChild(el('path',
+    {d:`M${x1},${y1} C${x1+34},${y1} ${x2-34},${y2} ${x2},${y2}`,fill:'none',stroke:col,'stroke-width':1.5,opacity:.55}));
+  const rootY=total/2;
+  M.forEach(cat=>{
+    path(X0+RW,rootY,X1,cat._y+H/2,'#35486e');
+    cat.conds.forEach(c=>path(X1+CW,cat._y+H/2,X2,rows.find(r=>r.c===c).y+H/2,RISKC[c.risk]));
+  });
+  // root
+  let g=el('g',{class:'mm-node'}); g.onclick=()=>go('dash');
+  g.appendChild(el('rect',{x:X0,y:rootY-26,width:RW,height:52,rx:11,fill:'#1e2b48',stroke:'#4f8cff','stroke-width':1.5,class:'mm-box'}));
+  let t=el('text',{x:X0+14,y:rootY-6,class:'mm-t'}); t.textContent='EPROZ00200'; g.appendChild(t);
+  t=el('text',{x:X0+14,y:rootY+9,class:'mm-s'}); t.textContent='New Case Application'; g.appendChild(t);
+  t=el('text',{x:X0+14,y:rootY+23,class:'mm-s',fill:'#a9b8d4'});
+  t.textContent=`${M.reduce((a,c)=>a+c.conds.length,0)} 條件 ／ ${M.reduce((a,c)=>a+c.conds.reduce((b,x)=>b+x.vis.length,0),0)} 案例`;
+  g.appendChild(t); svg.appendChild(g);
+  // categories
+  M.forEach(cat=>{
+    let n=0,p=0; cat.conds.forEach(c=>{n+=c.vis.length;p+=c.vis.filter(x=>x.res==='P').length;});
+    const pct=n?Math.round(p/n*100):0;
+    const gg=el('g',{class:'mm-node'}); gg.onclick=()=>{toggleCat(cat.id,true);};
+    gg.appendChild(el('rect',{x:X1,y:cat._y,width:CW,height:H,rx:9,fill:'#18233c',stroke:'#35486e','stroke-width':1.3,class:'mm-box'}));
+    let a=el('text',{x:X1+12,y:cat._y+18,class:'mm-t'}); a.textContent=cat.name; gg.appendChild(a);
+    a=el('text',{x:X1+12,y:cat._y+32,class:'mm-s'});
+    a.textContent=`${cat.conds.length} 條件 ｜ ${p}／${n} 通過`; gg.appendChild(a);
+    gg.appendChild(el('rect',{x:X1,y:cat._y+H-3,width:CW,height:3,fill:'#22304e'}));
+    gg.appendChild(el('rect',{x:X1,y:cat._y+H-3,width:CW*pct/100,height:3,
+      fill:pct>=95?'#2fbf71':pct>=75?'#f0a92c':'#ef4d5a'}));
+    svg.appendChild(gg);
+  });
+  // conditions
+  rows.forEach(r=>{
+    const c=r.c,n=c.vis.length,p=c.vis.filter(x=>x.res==='P').length,pct=n?Math.round(p/n*100):0;
+    const ai=c.vis.filter(x=>x.src==='AI').length, hu=n-ai;
+    const gg=el('g',{class:'mm-node'}); gg.onclick=()=>focusCond(c.id);
+    gg.appendChild(el('rect',{x:X2,y:r.y,width:DW,height:H,rx:9,fill:'#18233c',
+      stroke:n?RISKC[c.risk]:'#35486e','stroke-width':1.4,opacity:n?1:.75,class:'mm-box'}));
+    gg.appendChild(el('rect',{x:X2,y:r.y+9,width:3.5,height:H-18,rx:2,fill:RISKC[c.risk]}));
+    let a=el('text',{x:X2+14,y:r.y+18,class:'mm-t'});
+    a.textContent=`${c.id} ${c.name.length>18?c.name.slice(0,18)+'…':c.name}`; gg.appendChild(a);
+    a=el('text',{x:X2+14,y:r.y+32,class:'mm-s'});
+    a.textContent=n?`AI ${ai} ／ 人工 ${hu}`:'尚未展開測試案例'; gg.appendChild(a);
+    a=el('text',{x:X2+DW-13,y:r.y+25,class:'mm-pct','text-anchor':'end',
+      fill:n?(pct>=95?'#2fbf71':pct>=75?'#f0a92c':'#ef4d5a'):'#7286a8'});
+    a.textContent=n?`${p}／${n}`:'0／0'; gg.appendChild(a);
+    gg.appendChild(el('rect',{x:X2,y:r.y+H-3,width:DW,height:3,fill:'#22304e'}));
+    if(n)gg.appendChild(el('rect',{x:X2,y:r.y+H-3,width:DW*pct/100,height:3,
+      fill:pct>=95?'#2fbf71':pct>=75?'#f0a92c':'#ef4d5a'}));
+    svg.appendChild(gg);
+  });
+}
+
+/* ================= 巢狀清單 ================= */
+const OPEN={cat:new Set(['CAT-04','CAT-05','CAT-06']),cond:new Set()};
+function toggleCat(id,force){OPEN.cat.has(id)&&!force?OPEN.cat.delete(id):OPEN.cat.add(id);render2();
+  setTimeout(()=>{const e=document.getElementById('n-'+id);if(e)e.scrollIntoView({behavior:'smooth',block:'center'});},40);}
+function tCat(id){OPEN.cat.has(id)?OPEN.cat.delete(id):OPEN.cat.add(id);render2();}
+function tCond(id){OPEN.cond.has(id)?OPEN.cond.delete(id):OPEN.cond.add(id);render2();}
+function expandAll(){CATS.forEach(c=>{OPEN.cat.add(c.id);c.conds.forEach(x=>OPEN.cond.add(x.id));});render2();}
+function collapseAll(){OPEN.cat.clear();OPEN.cond.clear();render2();}
+function focusCond(id){
+  const c=CBY[id]; OPEN.cat.add(c.cat.id); OPEN.cond.add(id); render2();
+  setTimeout(()=>{const e=document.getElementById('c-'+id);
+    if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('hi');
+      setTimeout(()=>e.classList.remove('hi'),2400);}},60);
+}
+function mini(n,p){const pct=n?Math.round(p/n*1000)/10:0;
+  const col=n?(pct>=95?'var(--green)':pct>=75?'var(--amber)':'var(--red)'):'var(--line2)';
+  return `<div class="mini"><div class="mc">${n?p+'／'+n+' 案例':'0 案例'}</div>
+    <div class="mt track"><i style="width:${n?pct:100}%;background:${col};${n?'':'opacity:.35'}"></i></div>
+    <div class="mv" style="color:${n?col:'var(--tx3)'}">${n?pct+'%':'—'}</div></div>`;
+}
+function render2(){
+  const M=model();
+  drawMap(M);
+  let vc=0,vn=0,vp=0;
+  M.forEach(cat=>cat.conds.forEach(c=>{vc++;vn+=c.vis.length;vp+=c.vis.filter(x=>x.res==='P').length;}));
+  document.getElementById('fstat').innerHTML=
+    `符合條件：<b>${vc}</b> 條測試條件 ／ <b>${vn}</b> 個測試案例 ／ 通過率 <b>${vn?Math.round(vp/vn*1000)/10+'%':'—'}</b>`;
+  document.getElementById('nested').innerHTML = M.length? M.map(cat=>{
+    let n=0,p=0; cat.conds.forEach(c=>{n+=c.vis.length;p+=c.vis.filter(x=>x.res==='P').length;});
+    const op=OPEN.cat.has(cat.id);
+    return `<div class="cat" id="n-${cat.id}">
+      <div class="cat-h ${op?'open':''}" onclick="tCat('${cat.id}')">
+        <span class="ar">▶</span><span class="id">${cat.id}</span>
+        <span class="nm">${esc(cat.name)}</span>
+        <span style="font-size:11.5px;color:var(--tx3)">${esc(cat.desc)}</span>
+        ${mini(n,p)}
+      </div>
+      <div class="cat-b ${op?'open':''}">${cat.conds.map(c=>condHtml(c)).join('')}</div>
+    </div>`;}).join('') : `<div class="card"><div class="cbody" style="color:var(--tx3);font-size:13px">
+      目前篩選條件下沒有符合的測試條件。</div></div>`;
+}
+function condHtml(c){
+  const n=c.vis.length,p=c.vis.filter(x=>x.res==='P').length,op=OPEN.cond.has(c.id);
+  const ai=c.vis.filter(x=>x.src==='AI').length;
+  return `<div class="cond" id="c-${c.id}">
+    <div class="cond-h ${op?'open':''}" onclick="tCond('${c.id}')">
+      <span class="ar">▶</span><span class="cid">${c.id}</span>
+      <span class="ct">${esc(c.name)}</span>
+      <span class="tg ${RISKT[c.risk]}">${RISKN[c.risk]}風險</span>
+      ${c.reqs.map(r=>`<span class="tg tg-req">${r}</span>`).join('')}
+      ${n?`<span class="tg tg-ai">AI ${ai}</span><span class="tg tg-hu">人工 ${n-ai}</span>`
+         :`<span class="tg tg-n">尚未覆蓋</span>`}
+      ${mini(n,p)}
+    </div>
+    <div class="cond-b ${op?'open':''}">
+      <dl class="cmeta">
+        <dt>Given</dt><dd>${esc(c.given)}</dd>
+        <dt>When</dt><dd>${esc(c.when)}</dd>
+        <dt>Then</dt><dd>${esc(c.then)}</dd>
+        <dt>DB 驗證點</dt><dd>${esc(c.db)}</dd>
+      </dl>
+      ${n?caseRows(c.vis):`<div class="empty"><b>此測試條件尚未展開測試案例。</b><br>${esc(c.blocked||'不符合目前篩選條件的案例已隱藏。')}</div>`}
+      <div style="margin-top:10px"><button class="linkbtn" onclick="event.stopPropagation();openCond('${c.id}')">檢視完整條件與案例</button></div>
+    </div>
+  </div>`;
+}
+
+renderDash(); render2();
+</script>
+</body>
+</html>
