@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AIDLC Acceptance Review Workbench</title>
+  <style>
+    :root { color-scheme:light; --ink:#17243b; --muted:#64748b; --line:#dbe3ef; --wire:#c3d0e0; --accent:#075985; --surface:#f8fafc; --high:#b91c1c; --medium:#a16207; --low:#15803d; --pad:26px; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font:14px/1.55 Inter,"Segoe UI",sans-serif; color:var(--ink); background:#eef3f8; }
+    button,input,select,textarea { font:inherit; }
+    button { border:1px solid #b6c3d4; border-radius:8px; padding:8px 12px; color:var(--ink); background:white; cursor:pointer; }
+    button:hover { border-color:var(--accent); }
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible { outline:3px solid #38bdf855; outline-offset:2px; }
+    button:disabled { cursor:not-allowed; opacity:.4; }
+    .primary { color:white; border-color:var(--accent); background:var(--accent); }
+    .hidden { display:none !important; }
+    .empty-state { min-height:100vh; display:grid; place-items:center; }
+    .empty-state button { min-width:148px; padding:12px 20px; }
+    .app { min-height:100vh; }
+    .topbar { position:sticky; top:0; z-index:20; background:#eef3f8; }
+    .appbar { display:flex; gap:12px; align-items:center; padding:12px 22px; border-bottom:1px solid var(--line); background:white; box-shadow:0 4px 18px #0f172a0a; }
+    .appbar h1 { margin:0; font-size:17px; white-space:nowrap; }
+    .nav-history { display:flex; gap:4px; align-items:center; }
+    .nav-label { max-width:min(320px,26vw); overflow:hidden; color:var(--muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+    .actions { display:flex; gap:8px; align-items:center; margin-left:auto; }
+    .icon-button { display:grid; place-items:center; width:38px; height:38px; padding:0; }
+    .icon-button svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .search-box { display:flex; align-items:center; gap:6px; }
+    #search { width:min(280px,35vw); padding:8px 10px; border:1px solid #b6c3d4; border-radius:8px; }
+    input[type=file] { display:none; }
+    nav { display:flex; gap:6px; padding:10px 20px; overflow:auto; background:#eef3f8; }
+    nav button { white-space:nowrap; }
+    nav button.active { color:white; border-color:var(--accent); background:var(--accent); }
+    main { max-width:1600px; margin:auto; padding:6px 20px 24px; }
+    .panel { min-height:200px; padding:14px 18px 18px; border:1px solid var(--line); border-radius:12px; background:white; box-shadow:0 8px 28px #0f172a0d; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+    .toolbar-actions { display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:flex-end; min-width:0; margin-left:auto; }
+    .toolbar .count { color:var(--muted); font-weight:650; white-space:nowrap; }
+    .mini { padding:5px 9px; border-radius:99px; font-size:12px; white-space:nowrap; }
+    .mini.on { color:white; border-color:var(--accent); background:var(--accent); }
+    .group { display:flex; gap:4px; align-items:center; padding-right:6px; border-right:1px solid var(--line); }
+    .stats { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .stat { padding:7px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface); font-size:12px; }
+    .stat strong { display:block; font-size:16px; }
+    .stat.warn { border-color:#fcd34d; background:#fffbeb; }
+
+    .scroller { overflow:auto; border:1px solid var(--line); border-radius:10px; overscroll-behavior:contain; }
+    table { border-collapse:separate; border-spacing:0; table-layout:fixed; }
+    th,td { padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+    th { position:sticky; top:0; z-index:6; overflow:hidden; padding-right:16px; background:var(--surface); box-shadow:inset 0 -1px 0 var(--line); text-overflow:ellipsis; white-space:nowrap; }
+    th.sortable { cursor:pointer; user-select:none; }
+    th.sortable:hover { color:var(--accent); background:#eff6ff; }
+    th .arrow { color:#94a3b8; font-size:11px; }
+    th.sorted,th.sorted .arrow { color:var(--accent); }
+    th .resizer { position:absolute; top:0; right:0; bottom:0; width:9px; cursor:col-resize; touch-action:none; }
+    th .resizer::after { position:absolute; top:6px; right:4px; bottom:6px; border-right:1px solid var(--wire); content:""; }
+    th .resizer:hover::after { border-right:2px solid var(--accent); }
+    tbody td:first-child,thead th:first-child { position:sticky; left:0; z-index:5; background:white; box-shadow:1px 0 0 var(--line); }
+    thead th:first-child { z-index:8; background:var(--surface); box-shadow:1px 0 0 var(--line),inset 0 -1px 0 var(--line); }
+    td:empty::after { color:var(--muted); content:"—"; }
+    tbody tr:hover td { background:#f8fbff; }
+    .highlight,tr.highlight td:first-child { animation:highlight 2.2s ease-out; }
+    @keyframes highlight { 0%,35% { background:#fef3c7; } 100% { background:transparent; } }
+    tr.highlight td:first-child { animation-name:highlight-cell; }
+    @keyframes highlight-cell { 0%,35% { background:#fef3c7; } 100% { background:white; } }
+
+    .badge { display:inline-block; padding:2px 7px; border-radius:99px; color:white; font-size:12px; font-weight:700; white-space:nowrap; }
+    .High,.RETIRED,.AMBIGUOUS,.CONFLICT { background:var(--high); }
+    .Medium,.MODIFIED,.SPLIT,.MERGED,.PENDING { background:var(--medium); }
+    .Low,.ADDED { background:var(--low); }
+    .id-link,.risk-link { border:0; padding:0; color:var(--accent); background:transparent; font-weight:650; text-decoration:underline; }
+    .risk-link { text-decoration:none; }
+    .missing-id { color:var(--high); text-decoration:line-through; }
+    .source-detail { color:var(--muted); font-size:12px; }
+    .dot { display:inline-block; width:9px; height:9px; border-radius:99px; }
+
+    .entity { position:relative; display:grid; grid-template-columns:36px 46px 1fr 40px; gap:8px; align-items:center; width:360px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:white; }
+    .entity.compact { grid-template-columns:36px auto auto; width:auto; }
+    .entity[data-toggle] { cursor:pointer; }
+    .entity[data-toggle]:hover { border-color:#94a3b8; background:#eff6ff; }
+    .entity.rtm { border-color:#c8d3e2; background:#e9eef5; }
+    .entity.req { border-color:#d5dfec; background:#f3f6fb; }
+    .entity.ac { border-color:#e0e7f1; background:#fafcfe; }
+    .entity.tc { border-color:#e6ecf4; background:white; }
+    .e-kind { display:grid; place-items:center; width:100%; height:18px; border-radius:5px; color:white; font-size:10px; font-weight:800; letter-spacing:.06em; }
+    .entity.rtm .e-kind { background:#334155; }
+    .entity.req .e-kind { background:var(--accent); }
+    .entity.ac .e-kind { background:#0e7490; }
+    .entity.tc .e-kind { background:#4f46e5; }
+    .e-id { font-weight:650; font-variant-numeric:tabular-nums; }
+    .e-label { min-width:0; overflow:hidden; color:var(--muted); text-overflow:ellipsis; white-space:nowrap; }
+    .entity.req .e-label,.entity.rtm .e-label { color:var(--ink); }
+    .e-count { display:inline-flex; gap:4px; align-items:center; justify-content:flex-end; color:var(--muted); font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; }
+    .e-count.zero { color:var(--medium); font-weight:650; }
+    .e-caret { color:#94a3b8; font-size:11px; line-height:1; }
+    .e-caret.on { color:var(--accent); }
+    .entity[data-toggle]:hover .e-caret { color:var(--accent); }
+
+    .tree { display:flex; flex-direction:column; gap:4px; padding:4px 2px; }
+    .node { display:flex; flex-direction:column; gap:4px; }
+    .node.collapsed > .tree-children { display:none; }
+    .tree-children { margin-left:15px; }
+    .map { display:inline-flex; flex-direction:column; padding:10px 24px 10px 6px; }
+    .branch { display:flex; align-items:flex-start; }
+    .branch.collapsed > .map-children { display:none; }
+    .map-children { gap:6px; }
+    .map-children,.tree-children { position:relative; display:flex; flex-direction:column; gap:4px; padding-left:var(--pad); }
+    .map-children::before,.tree-children::before { position:absolute; top:var(--spine-top,0); bottom:var(--spine-bottom,0); left:0; border-left:1px solid var(--wire); content:""; }
+    .map-children > .branch > .entity::before,.tree-children > .node > .entity::before { position:absolute; top:50%; left:calc(-1 * var(--pad)); width:var(--pad); border-top:1px solid var(--wire); content:""; }
+    .branch:not(.leaf):not(.collapsed) > .entity::after { position:absolute; top:50%; right:calc(-1 * var(--pad)); width:var(--pad); border-top:1px solid var(--wire); content:""; }
+
+    .hover-card { position:fixed; z-index:45; width:min(390px,calc(100vw - 24px)); padding:10px 12px; border:1px solid var(--line); border-radius:11px; background:white; box-shadow:0 18px 44px #0f172a2e; }
+    .hc-title { display:flex; gap:8px; align-items:center; width:100%; margin-bottom:6px; padding:5px 7px; border-color:transparent; border-radius:7px; color:var(--accent); background:var(--surface); font-size:13px; font-weight:700; text-align:left; }
+    .hc-title:hover { border-color:var(--accent); background:#eff6ff; }
+    .hc-title .hc-go { margin-left:auto; color:var(--muted); font-size:11px; font-weight:600; white-space:nowrap; }
+    .hover-card .hc-row { display:grid; grid-template-columns:88px 1fr; gap:8px; margin-top:5px; font-size:12px; }
+    .hover-card .hc-key { color:var(--muted); font-weight:650; overflow-wrap:anywhere; }
+    .hover-card .hc-val { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow-wrap:anywhere; }
+    .hc-actions { display:flex; gap:8px; align-items:center; margin-top:10px; }
+    .hc-actions button { padding:4px 9px; border-radius:7px; font-size:12px; }
+    .hc-hint { color:var(--muted); font-size:11px; }
+
+    .status-area { position:fixed; right:18px; bottom:18px; z-index:30; display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+    .status-pill { border:0; border-radius:99px; box-shadow:0 10px 30px #0f172a33; font-weight:700; }
+    .status-pill.valid { color:white; background:var(--low); }
+    .status-pill.invalid { color:white; background:var(--high); }
+    .status-pill.dirty::before { content:"● "; color:#fde68a; }
+    .findings-drawer { width:min(440px,calc(100vw - 36px)); max-height:60vh; overflow:auto; padding:14px; border:1px solid var(--line); border-radius:12px; background:white; box-shadow:0 16px 44px #0f172a33; }
+    .findings-drawer h2 { margin:0 0 10px; font-size:16px; }
+    .finding { margin:8px 0; padding:9px 10px; border-left:4px solid var(--medium); border-radius:4px; background:#fffbeb; }
+    .finding.error { border-color:var(--high); background:#fef2f2; }
+    .finding-targets { display:flex; flex-wrap:wrap; gap:8px; margin-top:5px; }
+    .toasts { position:fixed; right:18px; bottom:72px; z-index:40; display:flex; width:min(380px,calc(100vw - 36px)); flex-direction:column; gap:8px; pointer-events:none; }
+    .toast { padding:10px 12px; border-radius:9px; color:white; background:#334155; box-shadow:0 10px 30px #0f172a33; }
+    .toast.error { background:var(--high); }
+    .modal-backdrop { position:fixed; inset:0; z-index:50; display:grid; place-items:center; padding:20px; background:#0f172a88; }
+    .modal { width:min(560px,100%); padding:20px; border-radius:14px; background:white; box-shadow:0 20px 60px #0f172a55; }
+    .modal h2 { margin:0 0 4px; }
+    .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0; }
+    .modal label { display:grid; gap:5px; font-weight:650; }
+    .modal label.wide { grid-column:1/-1; }
+    select,textarea { width:100%; padding:8px; border:1px solid #b6c3d4; border-radius:7px; }
+    textarea { min-height:92px; resize:vertical; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; }
+    .shortcut-list { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin:14px 0; }
+    .shortcut-list code { padding:1px 6px; border:1px solid var(--line); border-radius:5px; background:var(--surface); }
+    @media (max-width:760px) { .appbar{align-items:flex-start;flex-wrap:wrap}.actions{width:100%;margin:0}.search-box{margin-left:auto}.nav-label{display:none}main{padding:6px 10px 24px}nav{padding-inline:10px}.modal-grid{grid-template-columns:1fr}.modal label.wide{grid-column:auto} }
+  </style>
+</head>
+<body>
+  <section id="emptyState" class="empty-state">
+    <button id="openEmpty" class="primary">載入 JSON</button>
+  </section>
+
+  <div id="app" class="app hidden">
+    <div id="topbar" class="topbar">
+      <header class="appbar">
+        <div class="nav-history">
+          <button id="navBack" class="icon-button" aria-label="上一動" title="上一動 (Alt+←)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+          </button>
+          <button id="navForward" class="icon-button" aria-label="下一動" title="下一動 (Alt+→)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+          </button>
+        </div>
+        <h1>AIDLC Acceptance Workbench</h1>
+        <span id="navLabel" class="nav-label"></span>
+        <div class="actions">
+          <div class="search-box">
+            <input id="search" class="hidden" type="search" placeholder="搜尋目前資料（/）" aria-label="搜尋目前資料">
+            <button id="searchToggle" class="icon-button" aria-label="開啟搜尋" title="搜尋 (/)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+            </button>
+          </div>
+          <button id="openFile">載入 JSON</button>
+          <button id="reconnect" class="hidden">重新授權</button>
+          <input id="fileInput" type="file" accept="application/json,.json">
+          <button id="saveFile" title="儲存 (Ctrl/Cmd+S)">儲存</button>
+          <button id="helpToggle" class="icon-button" aria-label="快捷鍵說明" title="快捷鍵說明 (?)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.4"></path><path d="M12 17h.01"></path></svg>
+          </button>
+        </div>
+      </header>
+      <nav id="tabs"></nav>
+    </div>
+    <main><section id="content" class="panel"></section></main>
+  </div>
+
+  <div id="hoverCard" class="hover-card hidden" aria-hidden="true"></div>
+
+  <div id="statusArea" class="status-area hidden">
+    <aside id="findingsDrawer" class="findings-drawer hidden" aria-live="polite"></aside>
+    <button id="statusPill" class="status-pill">尚未驗證</button>
+  </div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <div id="riskBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="riskTitle">
+    <section class="modal">
+      <h2 id="riskTitle">Risk Assessment</h2>
+      <div id="riskTestCase" class="source-detail"></div>
+      <div class="modal-grid">
+        <label>Impact<select id="riskImpact"><option>High</option><option>Low</option></select></label>
+        <label>Likelihood<select id="riskLikelihood"><option>High</option><option>Low</option></select></label>
+        <label>Risk Level<input id="riskLevel" readonly></label>
+        <label class="wide">Rationale<textarea id="riskRationale"></textarea></label>
+      </div>
+      <div class="modal-actions">
+        <button id="riskCancel">取消</button>
+        <button id="riskApply" class="primary">套用</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="helpBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <section class="modal">
+      <h2 id="helpTitle">操作說明</h2>
+      <div class="shortcut-list">
+        <code>Alt + ←</code><span>回到上一動（瀏覽紀錄）</span>
+        <code>Alt + →</code><span>前往下一動</span>
+        <code>1 – 6</code><span>切換頁籤</span>
+        <code>/</code><span>開啟並聚焦搜尋</span>
+        <code>Esc</code><span>關閉對話框 / 清除搜尋</span>
+        <code>Ctrl / Cmd + S</code><span>儲存 JSON</span>
+        <code>?</code><span>顯示這份說明</span>
+        <code>拖曳表頭右緣</code><span>調整欄寬（雙擊還原該欄）</span>
+        <code>點擊節點</code><span>展開 / 收合該層</span>
+        <code>Hover 節點 / ID</code><span>顯示摘要，點卡片標題列跳到明細</span>
+      </div>
+      <div class="modal-actions"><button id="helpClose" class="primary">關閉</button></div>
+    </section>
+  </div>
+
+  <script>
+    const rootFields = ["schemaVersion","generatedAt","baselineGeneratedAt","documents","requirements","acceptanceCriteria","testCases","issues"];
+    const documentTypes = ["BIBLE","PRD","SRS","OTHER"];
+    const riskMatrix = {"High|High":"High","High|Low":"Medium","Low|High":"Medium","Low|Low":"Low"};
+    const views = [["rtm","RTM"],["testCases","Test Cases"],["requirements","Requirements"],["acceptanceCriteria","Acceptance Criteria"],["documents","Documents"],["issues","Issues"]];
+    const viewLabels = Object.fromEntries(views);
+    const documentFields = ["id","type","title","path","changeStatus"];
+    const requirementFields = ["id","title","statement","source","changeStatus","changedFields"];
+    const acFields = ["id","requirementIds","scenarioName","given","when","then","observableOutcome","applicableRoles","preconditionState","pendingQuestions","changeStatus"];
+    const tcFields = ["id","name","requirementIds","acceptanceCriteriaIds","testType","preconditions","testData","steps","expectedResults","uiVerificationPoints","apiVerificationPoints","dbVerificationPoints","risk","changeStatus"];
+    const issueFields = ["id","type","message","relatedIds","sourceDocumentIds"];
+    const rtmFields = ["requirementId","title","source","changeStatus","acceptanceCriteriaIds","testCaseIds"];
+    const collectionViews = {documents:"documents",requirements:"requirements",acceptanceCriteria:"acceptanceCriteria",testCases:"testCases",issues:"issues"};
+    const collectionOrder = ["requirements","acceptanceCriteria","testCases","documents","issues"];
+    const sortableFields = {
+      documents:{id:"text",type:"text",title:"text",changeStatus:"status"},
+      requirements:{id:"text",title:"text",changeStatus:"status"},
+      acceptanceCriteria:{id:"text",scenarioName:"text",changeStatus:"status"},
+      testCases:{id:"text",name:"text",testType:"text",risk:"risk",changeStatus:"status"},
+      issues:{id:"text",type:"text"},
+      rtm:{requirementId:"text",title:"text",changeStatus:"status",acceptanceCriteriaIds:"count",testCaseIds:"count"}
+    };
+    const defaultColumnWidths = {
+      id:208,requirementId:208,type:112,title:210,path:190,changeStatus:132,changedFields:160,source:210,
+      name:230,scenarioName:220,statement:300,message:340,given:230,when:230,then:280,observableOutcome:260,
+      applicableRoles:170,preconditionState:200,pendingQuestions:180,requirementIds:208,acceptanceCriteriaIds:208,
+      testCaseIds:208,relatedIds:208,sourceDocumentIds:214,testType:150,preconditions:240,testData:240,
+      steps:330,expectedResults:300,uiVerificationPoints:240,apiVerificationPoints:240,dbVerificationPoints:240,risk:260
+    };
+    const hoverFields = {
+      requirements:["title","statement","source","changeStatus"],
+      acceptanceCriteria:["scenarioName","given","when","then","observableOutcome","pendingQuestions"],
+      testCases:["name","testType","risk","expectedResults","changeStatus"],
+      documents:["title","type","path"],
+      issues:["type","message","relatedIds","sourceDocumentIds"]
+    };
+    const riskRank = {High:3,Medium:2,Low:1};
+    const statusRank = {AMBIGUOUS:6,RETIRED:5,SPLIT:4,MERGED:3,MODIFIED:2,ADDED:1};
+    const riskLevels = ["High","Medium","Low"];
+    const rtmModes = [["map","心智圖"],["tree","樹狀"],["table","表格"]];
+    const widthStorageKey = "aidlc-column-widths";
+    let data = null;
+    let activeView = "rtm";
+    let findings = {valid:true,errors:[],warnings:[],coverage:{}};
+    let currentFileHandle = null;
+    let dirty = false;
+    let idIndex = new Map();
+    let editingRiskId = null;
+    let shortIds = true;
+    const sortState = {};
+    const riskFilter = new Set();
+    let rtmMode = "map";
+    let rtmGapOnly = false;
+    let collapsedNodes = new Set();
+    let navStack = [];
+    let navPos = -1;
+    let columnWidths = readStoredWidths();
+    let suppressSort = false;
+    let hoverShowTimer = null;
+    let hoverHideTimer = null;
+    const el = identifier => document.getElementById(identifier);
+    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[character]);
+    const isLocalhost = ["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+    const isRetired = record => record?.changeStatus === "RETIRED";
+
+    function finding(severity,code,message,targetIds = []) {
+      return {severity,code,message,targetIds:[...new Set(targetIds.filter(Boolean).map(String))]};
+    }
+
+    function validate(value) {
+      const errors = [], warnings = [];
+      if (!value || typeof value !== "object" || Array.isArray(value)) return {valid:false,errors:[finding("ERROR","ROOT_TYPE","Canonical root must be an object")],warnings,coverage:{}};
+      for (const field of Object.keys(value)) if (!rootFields.includes(field)) errors.push(finding("ERROR","ROOT_FIELDS",`root contains excluded or unknown field ${field}`));
+      for (const field of rootFields) if (!(field in value)) errors.push(finding("ERROR","ROOT_FIELDS",`root is missing required field ${field}`));
+      if (value.schemaVersion !== "3.0") errors.push(finding("ERROR","SCHEMA_VERSION","schemaVersion must be 3.0"));
+      for (const name of ["documents","requirements","acceptanceCriteria","testCases","issues"]) if (!Array.isArray(value[name])) errors.push(finding("ERROR","COLLECTION_TYPE",`${name} must be an array`));
+      const documents = Array.isArray(value.documents) ? value.documents : [];
+      const requirements = Array.isArray(value.requirements) ? value.requirements : [];
+      const criteria = Array.isArray(value.acceptanceCriteria) ? value.acceptanceCriteria : [];
+      const testCases = Array.isArray(value.testCases) ? value.testCases : [];
+      const unique = (rows,label) => {
+        const result = new Set();
+        for (const row of rows) {
+          const identifier = String(row?.id ?? "");
+          if (!identifier) errors.push(finding("ERROR","MISSING_ID",`${label} has a missing ID`));
+          else if (result.has(identifier)) errors.push(finding("ERROR","DUPLICATE_ID",`duplicate ${label} ID ${identifier}`,[identifier]));
+          result.add(identifier);
+        }
+        result.delete(""); return result;
+      };
+      const documentIds = unique(documents,"document"), requirementIds = unique(requirements,"requirement"), criterionIds = unique(criteria,"acceptance criterion"), testCaseIds = unique(testCases,"test case");
+      for (const document of documents) if (!isRetired(document) || document.snapshotAvailable !== false) {
+        if (!documentTypes.includes(document.type)) errors.push(finding("ERROR","DOCUMENT_TYPE",`document ${document.id} has invalid type ${document.type}`,[document.id]));
+      }
+      for (const requirement of requirements) {
+        if (!/^REQ-[A-Z0-9-]+-[0-9]{3}$/.test(String(requirement.id ?? ""))) errors.push(finding("ERROR","REQUIREMENT_ID",`requirement ${requirement.id} has an invalid stable ID`,[requirement.id]));
+        if (isRetired(requirement) && requirement.snapshotAvailable === false) continue;
+        const source = requirement.source;
+        if (!source || typeof source !== "object" || Array.isArray(source)) errors.push(finding("ERROR","REQUIREMENT_SOURCE",`requirement ${requirement.id} source must be an object`,[requirement.id]));
+        else if (!documentIds.has(String(source.documentId ?? ""))) errors.push(finding("ERROR","MISSING_DOCUMENT",`requirement ${requirement.id} references missing document ${source.documentId}`,[requirement.id,source.documentId]));
+      }
+      for (const criterion of criteria) {
+        if (isRetired(criterion) && criterion.snapshotAvailable === false) continue;
+        for (const requirementId of criterion.requirementIds || []) if (!requirementIds.has(requirementId)) errors.push(finding("ERROR","MISSING_REQUIREMENT",`acceptance criterion ${criterion.id} references missing requirement ${requirementId}`,[criterion.id,requirementId]));
+      }
+      for (const testCase of testCases) {
+        if (isRetired(testCase) && testCase.snapshotAvailable === false) continue;
+        for (const requirementId of testCase.requirementIds || []) if (!requirementIds.has(requirementId)) errors.push(finding("ERROR","MISSING_REQUIREMENT",`test case ${testCase.id} references missing requirement ${requirementId}`,[testCase.id,requirementId]));
+        for (const criterionId of testCase.acceptanceCriteriaIds || []) if (!criterionIds.has(criterionId)) errors.push(finding("ERROR","MISSING_AC",`test case ${testCase.id} references missing acceptance criterion ${criterionId}`,[testCase.id,criterionId]));
+        const risk = testCase.risk;
+        if (!risk || typeof risk !== "object" || Array.isArray(risk)) errors.push(finding("ERROR","RISK_OBJECT",`test case ${testCase.id} risk must be an object`,[testCase.id]));
+        else {
+          const expected = riskMatrix[`${risk.impact}|${risk.likelihood}`];
+          if (!expected) errors.push(finding("ERROR","RISK_AXES",`test case ${testCase.id}: Impact and Likelihood must each be High or Low`,[testCase.id]));
+          else if (risk.level !== expected) errors.push(finding("ERROR","RISK_LEVEL",`test case ${testCase.id} risk level must calculate to ${expected}`,[testCase.id]));
+          if (!String(risk.rationale ?? "").trim()) errors.push(finding("ERROR","RISK_RATIONALE",`test case ${testCase.id} risk must have a rationale`,[testCase.id]));
+        }
+      }
+      const activeRequirementIds = new Set(requirements.filter(item => !isRetired(item) && item.snapshotAvailable !== false).map(item => item.id));
+      const activeCriterionIds = new Set(criteria.filter(item => !isRetired(item) && item.snapshotAvailable !== false).map(item => item.id));
+      const activeTestCaseIds = new Set(testCases.filter(item => !isRetired(item) && item.snapshotAvailable !== false).map(item => item.id));
+      const requirementsWithAc = new Set(criteria.filter(item => !isRetired(item)).flatMap(item => item.requirementIds || []).filter(identifier => activeRequirementIds.has(identifier)));
+      const criteriaWithTestCases = new Set(testCases.filter(item => !isRetired(item)).flatMap(item => item.acceptanceCriteriaIds || []).filter(identifier => activeCriterionIds.has(identifier)));
+      for (const identifier of activeRequirementIds) if (!requirementsWithAc.has(identifier)) warnings.push(finding("WARNING","UNCOVERED_REQUIREMENT",`requirement ${identifier} has no acceptance criterion`,[identifier]));
+      for (const identifier of activeCriterionIds) if (!criteriaWithTestCases.has(identifier)) warnings.push(finding("WARNING","UNCOVERED_AC",`acceptance criterion ${identifier} has no test case`,[identifier]));
+      for (const row of [...documents,...requirements,...criteria,...testCases]) if (row?.changeStatus === "AMBIGUOUS") warnings.push(finding("WARNING","AMBIGUOUS_IDENTITY",`${row.id} requires identity confirmation`,[row.id,...(row.candidateIds || [])]));
+      const coverage = {requirements:activeRequirementIds.size,requirementsWithAc:requirementsWithAc.size,acceptanceCriteria:activeCriterionIds.size,acceptanceCriteriaWithTestCases:criteriaWithTestCases.size,testCases:activeTestCaseIds.size,unresolvedIdentityMatches:warnings.filter(item => item.code === "AMBIGUOUS_IDENTITY").length};
+      return {valid:!errors.length,errors,warnings,coverage};
+    }
+
+    function setData(value,handle = null) {
+      data = value; currentFileHandle = handle; dirty = false;
+      findings = validate(data); buildIdIndex();
+      for (const key of Object.keys(sortState)) delete sortState[key];
+      riskFilter.clear(); rtmGapOnly = false; rtmMode = "map";
+      collapsedNodes = new Set((data?.acceptanceCriteria || []).map(item => String(item.id)));
+      navStack = []; navPos = -1;
+      const target = parseHash();
+      activeView = target.view || "rtm";
+      render();
+      pushNav(activeView,target.id,true);
+      if (target.id) requestAnimationFrame(() => focusRow(target.id));
+      toast("JSON 已載入");
+    }
+
+    function buildIdIndex() {
+      idIndex = new Map();
+      const projects = new Set();
+      for (const [collection,view] of Object.entries(collectionViews)) for (const item of data?.[collection] || []) {
+        const identifier = String(item.id);
+        idIndex.set(identifier,{view,collection,status:item.changeStatus});
+        const parts = identifier.split("-");
+        if (parts.length >= 3) projects.add(parts.slice(1,-1).join("-"));
+      }
+      shortIds = projects.size <= 1;
+    }
+
+
+    /* ---------- navigation history ---------- */
+
+    function parseHash() {
+      const raw = decodeURIComponent(location.hash.replace(/^#/,""));
+      if (!raw) return {view:null,id:null};
+      const [first,second] = raw.split("/");
+      if (second) return {view:viewLabels[first] ? first : null,id:second};
+      if (viewLabels[first]) return {view:first,id:null};
+      return {view:null,id:first};
+    }
+
+    function hashFor(entry) {
+      return `#${encodeURIComponent(entry.view)}${entry.id ? `/${encodeURIComponent(entry.id)}` : ""}`;
+    }
+
+    const currentNav = () => navStack[navPos] || null;
+
+    function pushNav(view,identifier = null,replace = false) {
+      const entry = {view,id:identifier || null};
+      const current = currentNav();
+      if (current && current.view === entry.view && current.id === entry.id) { syncHash(entry,true); return; }
+      if (replace && current) { navStack[navPos] = entry; syncHash(entry,true); updateNavButtons(); return; }
+      navStack = navStack.slice(0,navPos + 1);
+      navStack.push(entry); navPos = navStack.length - 1;
+      if (navStack.length > 120) { navStack.shift(); navPos--; }
+      syncHash(entry,navStack.length === 1 || replace);
+      updateNavButtons();
+    }
+
+    function syncHash(entry,replace = false) {
+      const url = hashFor(entry);
+      const state = {navPos};
+      if (replace) history.replaceState(state,"",url); else history.pushState(state,"",url);
+    }
+
+    function travel(delta) {
+      const target = navPos + delta;
+      if (target < 0 || target >= navStack.length) return;
+      navPos = target; applyNav(navStack[navPos]); history.replaceState({navPos},"",hashFor(navStack[navPos]));
+    }
+
+    function applyNav(entry) {
+      if (!entry) return;
+      activeView = entry.view; el("search").value = "";
+      if (entry.id && activeView === "rtm") expandAncestors(entry.id);
+      render();
+      if (entry.id) focusRow(entry.id);
+      updateNavButtons();
+    }
+
+    function navDescription(entry) {
+      return entry ? `${viewLabels[entry.view] || entry.view}${entry.id ? ` · ${entry.id}` : ""}` : "";
+    }
+
+    function updateNavButtons() {
+      const back = navStack[navPos - 1], forward = navStack[navPos + 1];
+      el("navBack").disabled = !back;
+      el("navForward").disabled = !forward;
+      el("navBack").title = back ? `上一動：${navDescription(back)} (Alt+←)` : "沒有上一動 (Alt+←)";
+      el("navForward").title = forward ? `下一動：${navDescription(forward)} (Alt+→)` : "沒有下一動 (Alt+→)";
+      const current = currentNav();
+      el("navLabel").textContent = current && current.id ? navDescription(current) : "";
+      el("navLabel").title = el("navLabel").textContent;
+    }
+
+    /* ---------- rendering ---------- */
+
+    function render() {
+      const loaded = Boolean(data);
+      el("emptyState").classList.toggle("hidden",loaded);
+      el("app").classList.toggle("hidden",!loaded);
+      el("statusArea").classList.toggle("hidden",!loaded);
+      if (!loaded) return;
+      el("tabs").innerHTML = views.map(([identifier,label],index) => `<button data-view="${identifier}" title="${label} (${index + 1})" class="${identifier === activeView ? "active" : ""}">${label}</button>`).join("");
+      el("tabs").querySelectorAll("[data-view]").forEach(button => button.onclick = () => switchView(button.dataset.view));
+      renderStatus(); renderView(); updateNavButtons();
+    }
+
+    function switchView(view) {
+      if (view === activeView) return;
+      activeView = view; el("search").value = ""; render(); pushNav(view,null);
+    }
+
+    function renderStatus() {
+      const count = findings.errors.length || findings.warnings.length;
+      const label = findings.errors.length ? `Invalid · ${findings.errors.length} errors` : `Valid · ${findings.warnings.length} warnings`;
+      el("statusPill").textContent = label;
+      el("statusPill").className = `status-pill ${findings.errors.length ? "invalid" : "valid"} ${dirty ? "dirty" : ""}`;
+      el("statusPill").disabled = !count;
+      const all = [...findings.errors,...findings.warnings];
+      el("findingsDrawer").innerHTML = `<h2>Validation findings</h2>${all.length ? all.map(item => `<div class="finding ${item.severity === "ERROR" ? "error" : ""}"><strong>${escapeHtml(item.code)}</strong><div>${escapeHtml(item.message)}</div><div class="finding-targets">${item.targetIds.map(identifier => renderScalar(identifier)).join("")}</div></div>`).join("") : "<p>沒有 findings。</p>"}`;
+      bindIdLinks();
+    }
+
+    const searchQuery = () => el("search").value.trim().toLowerCase();
+
+    function matchesQuery(value,query) {
+      return !query || JSON.stringify(value ?? "").toLowerCase().includes(query);
+    }
+
+    function sortValue(row,field,kind) {
+      if (kind === "risk") return riskRank[row.risk?.level] ?? 0;
+      if (kind === "status") return statusRank[row.changeStatus] ?? 0;
+      if (kind === "count") return (row[field] || []).length;
+      return String(row[field] ?? "");
+    }
+
+    function arrange(rows,viewKey) {
+      const query = searchQuery();
+      let selected = query ? rows.filter(row => matchesQuery(row,query)) : [...rows];
+      if (viewKey === "testCases" && riskFilter.size) selected = selected.filter(row => riskFilter.has(row.risk?.level));
+      const state = sortState[viewKey];
+      if (state) {
+        const kind = (sortableFields[viewKey] || {})[state.field] || "text";
+        selected.sort((left,right) => {
+          const a = sortValue(left,state.field,kind), b = sortValue(right,state.field,kind);
+          const result = typeof a === "number" ? a - b : a.localeCompare(b,"zh-Hant",{numeric:true});
+          return result * state.dir;
+        });
+      }
+      return selected;
+    }
+
+    function cycleSort(viewKey,field) {
+      const state = sortState[viewKey];
+      if (!state || state.field !== field) sortState[viewKey] = {field,dir:1};
+      else if (state.dir === 1) sortState[viewKey] = {field,dir:-1};
+      else delete sortState[viewKey];
+      renderView();
+    }
+
+    /* ---------- column widths ---------- */
+
+    function readStoredWidths() {
+      try { return JSON.parse(localStorage.getItem(widthStorageKey) || "{}") || {}; } catch (error) { return {}; }
+    }
+
+    function storeWidths() {
+      try { localStorage.setItem(widthStorageKey,JSON.stringify(columnWidths)); } catch (error) { /* storage unavailable */ }
+    }
+
+    const columnWidth = (viewKey,field) => columnWidths[viewKey]?.[field] ?? defaultColumnWidths[field] ?? 200;
+
+    function headerCell(field,viewKey) {
+      const kind = (sortableFields[viewKey] || {})[field];
+      const state = sortState[viewKey];
+      const active = kind && state && state.field === field;
+      const arrow = kind ? `<span class="arrow">${active ? (state.dir === 1 ? "▲" : "▼") : "↕"}</span>` : "";
+      const attributes = kind ? ` class="sortable${active ? " sorted" : ""}" data-sort-field="${escapeHtml(field)}" title="排序：升冪 → 降冪 → 取消"` : "";
+      return `<th${attributes}>${escapeHtml(field)} ${arrow}<span class="resizer" data-resize-field="${escapeHtml(field)}" title="拖曳調整欄寬，雙擊還原"></span></th>`;
+    }
+
+    function renderValue(value,field,row) {
+      if (field === "changeStatus" && value) return `<span class="badge ${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+      if (field === "type" && activeView === "issues" && value) return `<span class="badge ${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+      if (field === "risk" && value) return `<button class="risk-link" data-risk-id="${escapeHtml(row.id)}" title="編輯 Risk Assessment"><span class="badge ${escapeHtml(value.level)}">${escapeHtml(value.level)}</span></button><div class="source-detail">${escapeHtml(value.rationale)}</div>`;
+      if (value && typeof value === "object" && !Array.isArray(value)) return Object.entries(value).map(([key,item]) => `<div><strong>${escapeHtml(key)}</strong>: ${renderScalar(item)}</div>`).join("");
+      const values = Array.isArray(value) ? value : [value];
+      return values.map(item => renderScalar(item)).join(Array.isArray(value) ? "<br>" : "");
+    }
+
+    function renderScalar(value) {
+      const scalar = String(value ?? "");
+      if (idIndex.has(scalar)) return `<button class="id-link" data-target-id="${escapeHtml(scalar)}" data-hover-id="${escapeHtml(scalar)}">${escapeHtml(scalar)}</button>`;
+      if (/^(DOC|REQ|AC|TC|ISSUE)-/.test(scalar)) return `<span class="missing-id" title="Missing identity">${escapeHtml(scalar)}</span>`;
+      return escapeHtml(scalar);
+    }
+
+    function toolbarHtml(total,shown,extra = "") {
+      const state = sortState[activeView];
+      const sortReset = state ? `<button class="mini" data-action="reset-sort">重置排序（${escapeHtml(state.field)} ${state.dir === 1 ? "↑" : "↓"}）</button>` : "";
+      const widthReset = Object.keys(columnWidths[activeView] || {}).length ? `<button class="mini" data-action="reset-widths">重置欄寬</button>` : "";
+      const counter = shown === total ? `${total} 筆` : `${shown} / ${total} 筆`;
+      return `<div class="toolbar"><div class="count">${counter}</div><div class="toolbar-actions">${extra}${sortReset}${widthReset}</div></div>`;
+    }
+
+    function tableHtml(rows,fields,viewKey) {
+      const widths = fields.map(field => columnWidth(viewKey,field));
+      const total = widths.reduce((accumulator,value) => accumulator + value,0);
+      return `<div class="scroller"><table style="width:${total}px;min-width:100%">
+        <colgroup>${widths.map(width => `<col style="width:${width}px">`).join("")}</colgroup>
+        <thead><tr>${fields.map(field => headerCell(field,viewKey)).join("")}</tr></thead>
+        <tbody>${rows.map(row => `<tr data-row-id="${escapeHtml(row.id || "")}">${fields.map(field => `<td>${renderValue(row[field],field,row)}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table></div>`;
+    }
+
+    function renderCollection(rows,fields,extra = "") {
+      const selected = arrange(rows,activeView);
+      el("content").innerHTML = toolbarHtml(rows.length,selected.length,extra) + (selected.length ? tableHtml(selected,fields,activeView) : `<p class="source-detail">沒有符合條件的資料。</p>`);
+    }
+
+    function renderView() {
+      if (activeView === "rtm") renderRtm();
+      if (activeView === "documents") renderCollection(data.documents || [],documentFields);
+      if (activeView === "requirements") renderCollection(data.requirements || [],requirementFields);
+      if (activeView === "acceptanceCriteria") renderCollection(data.acceptanceCriteria || [],acFields);
+      if (activeView === "testCases") renderCollection(data.testCases || [],tcFields,`<span class="group">${riskLevels.map(level => `<button class="mini${riskFilter.has(level) ? " on" : ""}" data-risk-filter="${level}" title="篩選 Risk = ${level}">${level}</button>`).join("")}</span>`);
+      if (activeView === "issues") renderCollection(data.issues || [],issueFields);
+      hideHoverCard();
+      bindIdLinks(); bindRiskLinks(); bindSortHeaders(); bindColumnResizers(); bindToolbar(); bindTree(); bindHoverCards();
+      layoutSpines(); layoutScrollers();
+    }
+
+    /* ---------- RTM ---------- */
+
+    function rtmModel() {
+      const criteria = (data.acceptanceCriteria || []).filter(item => !isRetired(item));
+      const testCases = (data.testCases || []).filter(item => !isRetired(item));
+      return (data.requirements || []).filter(item => !isRetired(item)).map(requirement => {
+        const branches = criteria.filter(criterion => (criterion.requirementIds || []).includes(requirement.id))
+          .map(criterion => ({criterion,testCases:testCases.filter(testCase => (testCase.acceptanceCriteriaIds || []).includes(criterion.id))}));
+        const criterionIds = branches.map(branch => branch.criterion.id);
+        const orphans = testCases.filter(testCase => (testCase.requirementIds || []).includes(requirement.id) && !(testCase.acceptanceCriteriaIds || []).some(identifier => criterionIds.includes(identifier)));
+        const testCaseIds = [...new Set([...branches.flatMap(branch => branch.testCases.map(item => item.id)),...orphans.map(item => item.id)])];
+        return {requirement,branches,orphans,acceptanceCriteriaIds:criterionIds,testCaseIds};
+      });
+    }
+
+    function rtmRows(model) {
+      return model.map(entry => ({
+        id:entry.requirement.id,
+        requirementId:entry.requirement.id,
+        title:entry.requirement.title,
+        source:entry.requirement.source,
+        changeStatus:entry.requirement.changeStatus,
+        acceptanceCriteriaIds:entry.acceptanceCriteriaIds,
+        testCaseIds:entry.testCaseIds
+      }));
+    }
+
+    const hasGap = entry => !entry.branches.length || entry.branches.some(branch => !branch.testCases.length);
+
+    function filterRtm(model,query) {
+      if (!query) return model;
+      return model.map(entry => {
+        if (matchesQuery(entry.requirement,query)) return entry;
+        const branches = entry.branches
+          .map(branch => matchesQuery(branch.criterion,query) ? branch : {criterion:branch.criterion,testCases:branch.testCases.filter(testCase => matchesQuery(testCase,query))})
+          .filter(branch => matchesQuery(branch.criterion,query) || branch.testCases.length);
+        const orphans = entry.orphans.filter(testCase => matchesQuery(testCase,query));
+        return {...entry,branches,orphans};
+      }).filter(entry => entry.branches.length || entry.orphans.length);
+    }
+
+    function statsHtml() {
+      const coverage = findings.coverage || {};
+      const acGap = (coverage.requirements || 0) - (coverage.requirementsWithAc || 0);
+      const tcGap = (coverage.acceptanceCriteria || 0) - (coverage.acceptanceCriteriaWithTestCases || 0);
+      const tiles = [
+        [`${coverage.requirements ?? 0}`,"Requirements",false],
+        [`${coverage.acceptanceCriteria ?? 0}`,"Acceptance Criteria",false],
+        [`${coverage.testCases ?? 0}`,"Test Cases",false],
+        [`${acGap}`,"REQ 缺 AC",acGap > 0],
+        [`${tcGap}`,"AC 缺 TC",tcGap > 0]
+      ];
+      return `<div class="stats">${tiles.map(([value,label,warn]) => `<div class="stat${warn ? " warn" : ""}"><strong>${escapeHtml(value)}</strong>${escapeHtml(label)}</div>`).join("")}</div>`;
+    }
+
+    const isCollapsed = identifier => collapsedNodes.has(identifier) && !searchQuery();
+
+    function nodeIdLabel(identifier) {
+      if (!identifier || identifier === "__root") return "";
+      const parts = String(identifier).split("-");
+      return shortIds && parts.length >= 3 ? parts[parts.length - 1] : String(identifier);
+    }
+
+    function nodeTail(options,leaf,collapsed) {
+      if ("risk" in options) return `<span class="e-count">${options.risk ? `<span class="dot ${escapeHtml(options.risk.level)}" title="Risk ${escapeHtml(options.risk.level)}"></span>` : ""}</span>`;
+      const count = options.count ?? 0;
+      return `<span class="e-count${count ? "" : " zero"}" title="子節點數量">${leaf ? "" : `<span class="e-caret${collapsed ? " on" : ""}">${collapsed ? "▶" : "▼"}</span>`}${count}</span>`;
+    }
+
+    function entityHtml(kind,identifier,label,options,leaf,collapsed) {
+      const anchors = identifier === "__root" ? "" : ` data-row-id="${escapeHtml(identifier)}" data-hover-id="${escapeHtml(identifier)}"`;
+      const toggle = leaf ? "" : ` data-toggle="${escapeHtml(identifier)}" role="button" tabindex="0" title="${collapsed ? "展開" : "收合"}"`;
+      return `<div class="entity ${kind}${identifier === "__root" ? " compact" : ""}"${anchors}${toggle}>
+        <span class="e-kind">${escapeHtml(kind.toUpperCase())}</span>
+        ${identifier === "__root" ? "" : `<span class="e-id">${escapeHtml(nodeIdLabel(identifier))}</span>`}
+        <span class="e-label">${label}</span>
+        ${nodeTail(options,leaf,collapsed)}
+      </div>`;
+    }
+
+    function mapNode(kind,identifier,label,options,childHtml) {
+      const leaf = !childHtml;
+      const collapsed = !leaf && isCollapsed(identifier);
+      return `<div class="branch${leaf ? " leaf" : ""}${collapsed ? " collapsed" : ""}">
+        ${entityHtml(kind,identifier,label,options,leaf,collapsed)}
+        ${leaf ? "" : `<div class="map-children">${childHtml}</div>`}
+      </div>`;
+    }
+
+    function treeNode(kind,identifier,label,options,childHtml) {
+      const leaf = !childHtml;
+      const collapsed = !leaf && isCollapsed(identifier);
+      return `<div class="node${collapsed ? " collapsed" : ""}">
+        ${entityHtml(kind,identifier,label,options,leaf,collapsed)}
+        ${leaf ? "" : `<div class="tree-children">${childHtml}</div>`}
+      </div>`;
+    }
+
+    function rtmBranches(model,node) {
+      return model.map(entry => {
+        const criteria = entry.branches.map(branch => {
+          const testCases = branch.testCases.map(testCase => node("tc",testCase.id,escapeHtml(testCase.name || ""),{risk:testCase.risk ?? null},null)).join("");
+          return node("ac",branch.criterion.id,escapeHtml(branch.criterion.scenarioName || ""),{count:branch.testCases.length},testCases || null);
+        }).join("");
+        const orphans = entry.orphans.map(testCase => node("tc",testCase.id,escapeHtml(testCase.name || ""),{risk:testCase.risk ?? null},null)).join("");
+        return node("req",entry.requirement.id,escapeHtml(entry.requirement.title || ""),{count:entry.branches.length + entry.orphans.length},criteria + orphans || null);
+      }).join("");
+    }
+
+    function mapHtml(model) {
+      const branches = rtmBranches(model,mapNode);
+      return `<div class="scroller"><div class="map">${mapNode("rtm","__root","需求追溯矩陣",{count:model.length},branches || null)}</div></div>`;
+    }
+
+    function treeHtml(model) {
+      return `<div class="scroller"><div class="tree">${rtmBranches(model,treeNode)}</div></div>`;
+    }
+
+    function renderRtm() {
+      const model = rtmModel();
+      let selected = filterRtm(model,searchQuery());
+      if (rtmGapOnly) selected = selected.filter(hasGap);
+      const extra = `<span class="group">${rtmModes.map(([mode,label]) => `<button class="mini${rtmMode === mode ? " on" : ""}" data-action="rtm-mode" data-mode="${mode}">${label}</button>`).join("")}</span>
+        <button class="mini${rtmGapOnly ? " on" : ""}" data-action="rtm-gap" title="只顯示缺 AC 或缺 TC 的需求">只看缺口</button>
+        ${rtmMode === "table" ? "" : `<button class="mini" data-action="rtm-expand">展開全部</button><button class="mini" data-action="rtm-collapse">收合全部</button>`}`;
+      const empty = `<p class="source-detail">沒有符合條件的資料。</p>`;
+      let body = empty;
+      if (rtmMode === "table") {
+        const rows = arrange(rtmRows(selected),"rtm");
+        el("content").innerHTML = statsHtml() + toolbarHtml(model.length,rows.length,extra) + (rows.length ? tableHtml(rows,rtmFields,"rtm") : empty);
+        return;
+      }
+      if (selected.length) body = rtmMode === "map" ? mapHtml(selected) : treeHtml(selected);
+      el("content").innerHTML = statsHtml() + toolbarHtml(model.length,selected.length,extra) + body;
+    }
+
+    function allNodeIds() {
+      return ["__root",...(data.requirements || []).map(item => String(item.id)),...(data.acceptanceCriteria || []).map(item => String(item.id))];
+    }
+
+    function expandAncestors(identifier) {
+      collapsedNodes.delete("__root");
+      const record = (data.acceptanceCriteria || []).find(item => item.id === identifier)
+        || (data.testCases || []).find(item => item.id === identifier);
+      if (!record) { collapsedNodes.delete(identifier); return; }
+      for (const requirementId of record.requirementIds || []) collapsedNodes.delete(String(requirementId));
+      for (const criterionId of record.acceptanceCriteriaIds || []) {
+        collapsedNodes.delete(String(criterionId));
+        const criterion = (data.acceptanceCriteria || []).find(item => item.id === criterionId);
+        for (const requirementId of criterion?.requirementIds || []) collapsedNodes.delete(String(requirementId));
+      }
+      collapsedNodes.delete(identifier);
+    }
+
+    /* ---------- layout helpers ---------- */
+
+    function layoutScrollers() {
+      for (const node of el("content").querySelectorAll(".scroller")) {
+        const top = node.getBoundingClientRect().top;
+        node.style.maxHeight = `${Math.max(260,Math.round(window.innerHeight - top - 24))}px`;
+      }
+    }
+
+    function layoutSpines() {
+      for (const group of el("content").querySelectorAll(".map-children,.tree-children")) {
+        const children = [...group.children].filter(child => child.matches(".branch,.node"));
+        if (!children.length) continue;
+        const box = group.getBoundingClientRect();
+        const centerOf = element => {
+          const rect = element.getBoundingClientRect();
+          return rect.top + rect.height / 2 - box.top;
+        };
+        const entityOf = child => child.querySelector(":scope > .entity") || child;
+        const anchors = [centerOf(entityOf(children[0])),centerOf(entityOf(children[children.length - 1]))];
+        if (group.classList.contains("tree-children")) anchors.push(0);
+        else if (group.previousElementSibling) anchors.push(centerOf(group.previousElementSibling));
+        group.style.setProperty("--spine-top",`${Math.round(Math.min(...anchors))}px`);
+        group.style.setProperty("--spine-bottom",`${Math.round(box.height - Math.max(...anchors))}px`);
+      }
+    }
+
+    /* ---------- hover cards ---------- */
+
+    function recordFor(identifier) {
+      for (const collection of collectionOrder) {
+        const found = (data?.[collection] || []).find(item => String(item.id) === identifier);
+        if (found) return {collection,record:found};
+      }
+      return null;
+    }
+
+    function hoverValue(field,value) {
+      if (field === "risk" && value) return `${escapeHtml(value.level)} · ${escapeHtml(value.rationale ?? "")}`;
+      if (Array.isArray(value)) return value.map(item => escapeHtml(item)).join("<br>");
+      if (value && typeof value === "object") return Object.entries(value).map(([key,item]) => `${escapeHtml(key)}: ${escapeHtml(item)}`).join("　");
+      return escapeHtml(value);
+    }
+
+    function hoverCardHtml(found,identifier) {
+      const rows = (hoverFields[found.collection] || []).filter(field => {
+        const value = found.record[field];
+        return value !== undefined && value !== null && value !== "" && (!Array.isArray(value) || value.length);
+      }).map(field => `<div class="hc-row"><span class="hc-key">${escapeHtml(field)}</span><span class="hc-val">${hoverValue(field,found.record[field])}</span></div>`).join("");
+      const riskAction = found.collection === "testCases" ? `<button data-card-risk>編輯 Risk</button>` : "";
+      return `<button class="hc-title" data-card-open>${escapeHtml(identifier)}<span class="hc-go">開啟明細 ↗</span></button>
+        ${rows || `<div class="hc-row"><span class="hc-val">沒有更多欄位。</span></div>`}
+        <div class="hc-actions"><span class="hc-hint">點上方標題列跳到明細</span>${riskAction}</div>`;
+    }
+
+    function showHoverCard(node) {
+      const identifier = node.dataset.hoverId;
+      const found = recordFor(identifier);
+      if (!found) return;
+      const card = el("hoverCard");
+      card.innerHTML = hoverCardHtml(found,identifier);
+      card.classList.remove("hidden");
+      card.onmouseenter = () => clearTimeout(hoverHideTimer);
+      card.onmouseleave = hideHoverCard;
+      card.querySelector("[data-card-open]").onclick = () => { hideHoverCard(); navigateToId(identifier,node.dataset.rowId || null); };
+      const riskButton = card.querySelector("[data-card-risk]");
+      if (riskButton) riskButton.onclick = () => { hideHoverCard(); openRisk(identifier); };
+      const anchor = node.getBoundingClientRect();
+      const size = card.getBoundingClientRect();
+      let left = anchor.right + 8;
+      if (left + size.width > window.innerWidth - 12) left = Math.max(12,anchor.left - size.width - 8);
+      let top = anchor.top - 6;
+      if (top + size.height > window.innerHeight - 12) top = Math.max(12,window.innerHeight - size.height - 12);
+      card.style.left = `${Math.round(left)}px`;
+      card.style.top = `${Math.round(top)}px`;
+    }
+
+    function scheduleHoverHide() {
+      clearTimeout(hoverHideTimer);
+      hoverHideTimer = setTimeout(hideHoverCard,220);
+    }
+
+    function hideHoverCard() {
+      clearTimeout(hoverShowTimer); clearTimeout(hoverHideTimer);
+      el("hoverCard").classList.add("hidden");
+    }
+
+    function bindHoverCards() {
+      for (const node of el("content").querySelectorAll("[data-hover-id]")) {
+        node.onmouseenter = () => { clearTimeout(hoverHideTimer); clearTimeout(hoverShowTimer); hoverShowTimer = setTimeout(() => showHoverCard(node),180); };
+        node.onmouseleave = () => { clearTimeout(hoverShowTimer); scheduleHoverHide(); };
+        node.onfocus = () => showHoverCard(node);
+        node.onblur = scheduleHoverHide;
+      }
+    }
+    /* ---------- interactions ---------- */
+
+    function bindIdLinks() {
+      for (const node of document.querySelectorAll("[data-target-id]")) {
+        node.onclick = event => {
+          const origin = event.currentTarget.closest("[data-row-id]")?.dataset.rowId || null;
+          navigateToId(node.dataset.targetId,origin);
+        };
+        if (node.getAttribute("role") === "button") node.onkeydown = event => {
+          if (event.key === "Enter" || event.key === " ") { event.preventDefault(); node.click(); }
+        };
+      }
+    }
+
+    function bindRiskLinks() {
+      for (const button of document.querySelectorAll("[data-risk-id]")) button.onclick = event => { event.stopPropagation(); openRisk(button.dataset.riskId); };
+    }
+
+    function bindSortHeaders() {
+      for (const cell of el("content").querySelectorAll("[data-sort-field]")) cell.onclick = () => { if (!suppressSort) cycleSort(activeView,cell.dataset.sortField); };
+    }
+
+    function bindColumnResizers() {
+      for (const handle of el("content").querySelectorAll("[data-resize-field]")) {
+        handle.onpointerdown = event => {
+          event.preventDefault(); event.stopPropagation();
+          suppressSort = true;
+          const field = handle.dataset.resizeField;
+          const cell = handle.closest("th");
+          const table = handle.closest("table");
+          const columns = [...table.querySelectorAll("col")];
+          const column = columns[[...table.querySelectorAll("thead th")].indexOf(cell)];
+          if (!column) return;
+          const startX = event.clientX;
+          const startWidth = parseFloat(column.style.width) || cell.offsetWidth;
+          const totalWidth = () => columns.reduce((accumulator,item) => accumulator + (parseFloat(item.style.width) || 0),0);
+          const move = pointer => {
+            column.style.width = `${Math.max(80,Math.round(startWidth + pointer.clientX - startX))}px`;
+            table.style.width = `${totalWidth()}px`;
+          };
+          const up = () => {
+            window.removeEventListener("pointermove",move);
+            window.removeEventListener("pointerup",up);
+            (columnWidths[activeView] ||= {})[field] = parseFloat(column.style.width);
+            storeWidths();
+            setTimeout(() => { suppressSort = false; renderView(); },0);
+          };
+          window.addEventListener("pointermove",move);
+          window.addEventListener("pointerup",up);
+        };
+        handle.ondblclick = event => {
+          event.stopPropagation();
+          if (columnWidths[activeView]) { delete columnWidths[activeView][handle.dataset.resizeField]; storeWidths(); renderView(); }
+        };
+      }
+    }
+
+    function bindToolbar() {
+      for (const button of el("content").querySelectorAll("[data-action]")) button.onclick = () => {
+        const action = button.dataset.action;
+        if (action === "reset-sort") delete sortState[activeView];
+        if (action === "reset-widths") { delete columnWidths[activeView]; storeWidths(); }
+        if (action === "rtm-mode") rtmMode = button.dataset.mode;
+        if (action === "rtm-gap") rtmGapOnly = !rtmGapOnly;
+        if (action === "rtm-expand") collapsedNodes = new Set();
+        if (action === "rtm-collapse") collapsedNodes = new Set(allNodeIds());
+        renderView();
+      };
+      for (const button of el("content").querySelectorAll("[data-risk-filter]")) button.onclick = () => {
+        const level = button.dataset.riskFilter;
+        if (riskFilter.has(level)) riskFilter.delete(level); else riskFilter.add(level);
+        renderView();
+      };
+    }
+
+    function bindTree() {
+      for (const node of el("content").querySelectorAll("[data-toggle]")) {
+        node.onclick = () => toggleNode(node.dataset.toggle);
+        node.onkeydown = event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleNode(node.dataset.toggle); } };
+      }
+    }
+
+    function toggleNode(identifier) {
+      if (collapsedNodes.has(identifier)) collapsedNodes.delete(identifier); else collapsedNodes.add(identifier);
+      hideHoverCard(); renderPreservingScroll();
+    }
+
+    function renderPreservingScroll() {
+      const previous = el("content").querySelector(".scroller");
+      const left = previous?.scrollLeft ?? 0, top = previous?.scrollTop ?? 0;
+      renderView();
+      const next = el("content").querySelector(".scroller");
+      if (next) { next.scrollLeft = left; next.scrollTop = top; }
+    }
+
+    function focusRow(identifier) {
+      const target = [...document.querySelectorAll("[data-row-id]")].find(item => item.dataset.rowId === identifier);
+      if (!target) return;
+      target.classList.remove("highlight"); void target.offsetWidth; target.classList.add("highlight");
+      target.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});
+    }
+
+    function navigateToId(identifier,origin = null) {
+      const target = idIndex.get(identifier); if (!target) return;
+      const current = currentNav();
+      if (current && origin && !current.id) { current.id = origin; history.replaceState({navPos},"",hashFor(current)); }
+      hideHoverCard();
+      activeView = target.view; el("search").value = "";
+      if (activeView === "rtm") expandAncestors(identifier);
+      render(); focusRow(identifier); pushNav(activeView,identifier);
+      el("findingsDrawer").classList.add("hidden");
+    }
+
+    function openRisk(identifier) {
+      const testCase = (data.testCases || []).find(item => item.id === identifier); if (!testCase) return;
+      editingRiskId = identifier;
+      el("riskTestCase").textContent = `${identifier} · ${testCase.name}`;
+      el("riskImpact").value = testCase.risk?.impact ?? "High";
+      el("riskLikelihood").value = testCase.risk?.likelihood ?? "High";
+      el("riskLevel").value = testCase.risk?.level ?? "";
+      el("riskRationale").value = testCase.risk?.rationale ?? "";
+      el("riskBackdrop").classList.remove("hidden");
+      el("riskImpact").focus();
+    }
+
+    function refreshRiskLevel() {
+      el("riskLevel").value = riskMatrix[`${el("riskImpact").value}|${el("riskLikelihood").value}`] || "";
+    }
+
+    function applyRisk() {
+      const testCase = (data.testCases || []).find(item => item.id === editingRiskId); if (!testCase) return;
+      const identifier = editingRiskId;
+      testCase.risk = {impact:el("riskImpact").value,likelihood:el("riskLikelihood").value,level:el("riskLevel").value,rationale:el("riskRationale").value.trim()};
+      dirty = true; findings = validate(data); closeRisk(); render(); focusRow(identifier); toast("Risk Assessment 已更新");
+    }
+
+    function closeRisk() { editingRiskId = null; el("riskBackdrop").classList.add("hidden"); }
+
+    function toggleSearch(force) {
+      const input = el("search");
+      const show = force === undefined ? input.classList.contains("hidden") : force;
+      input.classList.toggle("hidden",!show);
+      el("searchToggle").setAttribute("aria-label",show ? "關閉搜尋" : "開啟搜尋");
+      if (show) input.focus(); else { input.value = ""; if (data) renderView(); }
+      layoutScrollers();
+    }
+
+    function toast(message,type = "info") {
+      const identifier = `toast-${Date.now()}-${Math.random()}`;
+      el("toasts").innerHTML += `<div id="${identifier}" class="toast ${type === "error" ? "error" : ""}">${escapeHtml(message)}</div>`;
+      setTimeout(() => el(identifier)?.remove(),4200);
+    }
+
+    async function openCanonicalFile() {
+      try {
+        if ("showOpenFilePicker" in window) {
+          const handles = await window.showOpenFilePicker({types:[{description:"AIDLC canonical JSON",accept:{"application/json":[".json"]}}],multiple:false});
+          await loadFromHandle(handles[0]); if (isLocalhost) await storeHandle(handles[0]);
+        } else el("fileInput").click();
+      } catch (error) { if (error.name !== "AbortError") toast(`載入失敗：${error.message}`,"error"); }
+    }
+
+    async function loadFromHandle(handle) {
+      const file = await handle.getFile(); setData(JSON.parse(await file.text()),handle); el("reconnect").classList.add("hidden");
+    }
+
+    async function saveCanonicalFile() {
+      if (!data) return; findings = validate(data); renderStatus();
+      if (findings.errors.length) { dirty = true; renderStatus(); toast("資料未通過 validation，無法儲存。","error"); return; }
+      try {
+        let handle = currentFileHandle;
+        if (handle) {
+          let permission = await handle.queryPermission({mode:"readwrite"});
+          if (permission !== "granted") permission = await handle.requestPermission({mode:"readwrite"});
+          if (permission !== "granted") throw new Error("未取得檔案寫入權限");
+        } else if ("showSaveFilePicker" in window) {
+          handle = await window.showSaveFilePicker({suggestedName:"acceptance-assets.json",types:[{description:"AIDLC canonical JSON",accept:{"application/json":[".json"]}}]});
+        } else { toast("此瀏覽器不支援直接儲存或覆蓋本機檔案。","error"); return; }
+        const writable = await handle.createWritable(); await writable.write(`${JSON.stringify(data,null,2)}\n`); await writable.close();
+        currentFileHandle = handle; dirty = false; if (isLocalhost) await storeHandle(handle); renderStatus(); toast("JSON 已儲存");
+      } catch (error) { if (error.name !== "AbortError") toast(`儲存失敗：${error.message}`,"error"); }
+    }
+
+    function openHandleDatabase() {
+      return new Promise((resolve,reject) => { const request = indexedDB.open("aidlc-workbench",1); request.onupgradeneeded = () => request.result.createObjectStore("handles"); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+    }
+
+    async function storeHandle(handle) {
+      if (!isLocalhost || !("indexedDB" in window)) return;
+      const database = await openHandleDatabase(); await new Promise((resolve,reject) => { const request = database.transaction("handles","readwrite").objectStore("handles").put(handle,"canonical"); request.onsuccess = resolve; request.onerror = () => reject(request.error); }); database.close();
+    }
+
+    async function restoreHandle() {
+      if (!isLocalhost || !("indexedDB" in window)) return;
+      try {
+        const database = await openHandleDatabase(); const handle = await new Promise((resolve,reject) => { const request = database.transaction("handles").objectStore("handles").get("canonical"); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); database.close();
+        if (!handle) return; const permission = await handle.queryPermission({mode:"read"});
+        if (permission === "granted") await loadFromHandle(handle); else { currentFileHandle = handle; el("reconnect").classList.remove("hidden"); }
+      } catch (error) { toast(`無法還原上次檔案：${error.message}`,"error"); }
+    }
+
+    async function reconnectHandle() {
+      if (!currentFileHandle) return; const permission = await currentFileHandle.requestPermission({mode:"read"}); if (permission === "granted") await loadFromHandle(currentFileHandle);
+    }
+
+    el("openEmpty").onclick = openCanonicalFile;
+    el("openFile").onclick = openCanonicalFile;
+    el("saveFile").onclick = saveCanonicalFile;
+    el("reconnect").onclick = reconnectHandle;
+    el("searchToggle").onclick = () => toggleSearch();
+    el("search").oninput = () => data && renderView();
+    el("statusPill").onclick = () => el("findingsDrawer").classList.toggle("hidden");
+    el("riskImpact").onchange = refreshRiskLevel;
+    el("riskLikelihood").onchange = refreshRiskLevel;
+    el("riskCancel").onclick = closeRisk;
+    el("riskApply").onclick = applyRisk;
+    el("riskBackdrop").onclick = event => { if (event.target === el("riskBackdrop")) closeRisk(); };
+    el("navBack").onclick = () => travel(-1);
+    el("navForward").onclick = () => travel(1);
+    el("helpToggle").onclick = () => el("helpBackdrop").classList.toggle("hidden");
+    el("helpClose").onclick = () => el("helpBackdrop").classList.add("hidden");
+    el("helpBackdrop").onclick = event => { if (event.target === el("helpBackdrop")) el("helpBackdrop").classList.add("hidden"); };
+    el("fileInput").onchange = async event => { const file = event.target.files[0]; if (!file) return; try { setData(JSON.parse(await file.text())); } catch (error) { toast(`載入失敗：${error.message}`,"error"); } event.target.value = ""; };
+
+    window.addEventListener("popstate", event => {
+      if (!data) return;
+      const position = event.state?.navPos;
+      if (typeof position === "number" && navStack[position]) { navPos = position; applyNav(navStack[navPos]); return; }
+      const target = parseHash();
+      if (target.view || target.id) { navPos = navStack.length; navStack.push({view:target.view || activeView,id:target.id}); applyNav(navStack[navPos]); }
+    });
+
+    window.addEventListener("resize",() => { hideHoverCard(); layoutSpines(); layoutScrollers(); });
+    window.addEventListener("scroll",hideHoverCard,true);
+    window.addEventListener("beforeunload", event => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
+    if ("ResizeObserver" in window) new ResizeObserver(layoutScrollers).observe(el("topbar"));
+
+    document.addEventListener("keydown", event => {
+      const typing = ["INPUT","TEXTAREA","SELECT"].includes(event.target.tagName);
+      if (event.altKey && event.key === "ArrowLeft") { event.preventDefault(); travel(-1); return; }
+      if (event.altKey && event.key === "ArrowRight") { event.preventDefault(); travel(1); return; }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") { event.preventDefault(); saveCanonicalFile(); return; }
+      if (event.key === "Escape") {
+        hideHoverCard();
+        if (!el("riskBackdrop").classList.contains("hidden")) { closeRisk(); return; }
+        if (!el("helpBackdrop").classList.contains("hidden")) { el("helpBackdrop").classList.add("hidden"); return; }
+        if (!el("search").classList.contains("hidden")) { toggleSearch(false); return; }
+        el("findingsDrawer").classList.add("hidden"); return;
+      }
+      if (typing || event.metaKey || event.ctrlKey || event.altKey || !data) return;
+      if (event.key === "/") { event.preventDefault(); toggleSearch(true); return; }
+      if (event.key === "?") { event.preventDefault(); el("helpBackdrop").classList.toggle("hidden"); return; }
+      const index = Number(event.key);
+      if (Number.isInteger(index) && index >= 1 && index <= views.length) { event.preventDefault(); switchView(views[index - 1][0]); }
+    });
+
+    window.aidlcValidate = validate;
+    render();
+    if (isLocalhost) restoreHandle();
+  </script>
+</body>
+</html>
