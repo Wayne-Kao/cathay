@@ -1,0 +1,3996 @@
+{
+  "project": "EPROZ00200",
+  "generatedAt": "2026-08-21T01:00:00+08:00",
+  "baseline": null,
+  "docs": [
+    {
+      "id": "STT-DOC-001",
+      "path": "bible_v1.1.md",
+      "type": "BIBLE"
+    },
+    {
+      "id": "STT-DOC-002",
+      "path": "共用模組/ERPOZ00200/PRD_v1.0.md",
+      "type": "PRD"
+    },
+    {
+      "id": "STT-DOC-003",
+      "path": "共用模組/ERPOZ00200/epl-case-add-application_新起案件_v1.5_20260601.md",
+      "type": "SRS"
+    },
+    {
+      "id": "STT-DOC-004",
+      "path": "共用模組/ERPOZ00200/epl-list-caseapplication_借款人、借款公司資訊清單_後端系統規格書_v1.3_20250925.md",
+      "type": "SRS"
+    },
+    {
+      "id": "STT-DOC-005",
+      "path": "共用模組/ERPOZ00200/前端系統規格書_v1.11_20260130.md",
+      "type": "SRS"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "STT-REQ-001",
+      "text": "進入新起案件頁時必須清除前次案件 session。",
+      "src": [
+        "STT-DOC-002#4.1 EPROZ00200-REQ-001 初始化"
+      ],
+      "from": "REQ-001-01"
+    },
+    {
+      "id": "STT-REQ-002",
+      "text": "初始化必須取得 LOAN_TYPE 與 MTG_PRODUCT 共用參數代碼。",
+      "src": [
+        "STT-DOC-002#4.1 EPROZ00200-REQ-001 初始化",
+        "STT-DOC-005#欄位說明"
+      ],
+      "from": "REQ-001-02"
+    },
+    {
+      "id": "STT-REQ-003",
+      "text": "前端必須依使用者選擇重新取得 product 與 loan type 選項，不得沿用前次結果。",
+      "src": [
+        "STT-DOC-002#4.1 EPROZ00200-REQ-001 初始化"
+      ],
+      "from": "REQ-001-03"
+    },
+    {
+      "id": "STT-REQ-004",
+      "text": "僅 AO Assistant（001）與 AO（002）可執行新起案件作業。",
+      "src": [
+        "STT-DOC-005#作業說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-005",
+      "text": "建案 API 必須自行驗證呼叫者權限，不得信任前端，權限不足時回傳 E998 Authentication error。",
+      "src": [
+        "STT-DOC-003#處理結果代碼表",
+        "STT-DOC-002#7. 非功能需求"
+      ]
+    },
+    {
+      "id": "STT-REQ-006",
+      "text": "建案時 lonAttribute 為必填，允許值為 I（個金）或 C（企金）。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-007",
+      "text": "建案時 secureAttribute 為必填，允許值為 S（有擔）或 U（無擔）。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-008",
+      "text": "建案時 productCode 為必填。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-009",
+      "text": "當 lonAttribute=I 且 secureAttribute=S 且 productCode=01 時，mtgProductCode 為必填。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-010",
+      "text": "建案時 lonTypeCode 為必填。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-011",
+      "text": "當 lonTypeCode 為 02、03 或 04 時，refApplicationNo 為必填。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-002#4.4 EPROZ00200-REQ-004 Execute 建案"
+      ]
+    },
+    {
+      "id": "STT-REQ-012",
+      "text": "任一必填欄位傳入空字串時，建案 API 回傳 code=E102，message 為「<該欄位名> must not be blank」。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-003#處理結果代碼表"
+      ]
+    },
+    {
+      "id": "STT-REQ-013",
+      "text": "Customer Type 或 Product Type 變更後，必須重新載入 Sub-Product Type(1) 的選項內容。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.1 欄位規則"
+      ]
+    },
+    {
+      "id": "STT-REQ-014",
+      "text": "僅當 Customer Type=Individual、Product Type=Secured 且 Sub-Product Type(1)=Mortgage Loan(01) 時顯示 Sub-Product Type(2) 並設為必填，其餘情境隱藏該欄位。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.1 欄位規則"
+      ]
+    },
+    {
+      "id": "STT-REQ-015",
+      "text": "Customer Type=Corporate 且 Product Type=Unsecured 時，Sub-Product Type(1) 預設選第二筆資料；其餘情境預設顯示 Please select。",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-016",
+      "text": "Loan Type 的可選項目依 Customer Type、Product Type 與 Sub-Product Type(1) 的組合決定。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#4.2 EPROZ00200-REQ-002 Product / Loan Type 規則"
+      ]
+    },
+    {
+      "id": "STT-REQ-017",
+      "text": "Loan Type 選擇 Additional(02)、Renew(03) 或 Change Condition(04) 時顯示 Matching Engine 區塊，其餘隱藏。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.2 搜尋區塊顯示規則"
+      ]
+    },
+    {
+      "id": "STT-REQ-018",
+      "text": "按下建案按鈕前，前端必須對 Customer Type、Product Type、Sub-Product Type(1)、Loan Type 及必填時的 Sub-Product Type(2) 做不允許空白檢核，未填者於欄位後顯示 Please select（message key COMMON_UI_PLEASE_SELECT）。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.3 前端驗證"
+      ]
+    },
+    {
+      "id": "STT-REQ-019",
+      "text": "Matching Engine 的查詢欄位依情境顯示：個金 Additional 顯示 Doc No.；個金 Renew／Change Condition 顯示 Date of Birth；企金 Additional／Renew／Change Condition 顯示 Register No.。",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-020",
+      "text": "按下 Search 時，查詢條件必須至少填一項，全部為空時於相關欄位後顯示 Please enter the value（message key COMMON_VALIDATE_001）。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.3 前端驗證"
+      ]
+    },
+    {
+      "id": "STT-REQ-021",
+      "text": "填入 Application No 查詢時必須同時填入該情境的識別欄位：個金 Additional 需 Doc No.；個金 Renew／Change Condition 需 Name of Applicant 與 Date of Birth；企金需 Register No.。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-005#搜尋補充 (QA)"
+      ]
+    },
+    {
+      "id": "STT-REQ-022",
+      "text": "Name of Applicant 為模糊查詢且只能查到同分行同部門的案件，部門以 TB_LON_SUMMARY_INFO.BELONG_DEP_CODE 比對；以 Application No 查詢則可跨部門。",
+      "src": [
+        "STT-DOC-005#搜尋補充 (QA)"
+      ]
+    },
+    {
+      "id": "STT-REQ-023",
+      "text": "案件清單查詢 API 必填 page、size、deptCode、loanAttribute、secureAttribute、langType，且 applicantName、applicationNo、docNo、dateOfBirth、registerNo 至少一項不為空。",
+      "src": [
+        "STT-DOC-004#API Body"
+      ]
+    },
+    {
+      "id": "STT-REQ-024",
+      "text": "可被引用的參考案件必須符合 CASE_PROGRESS 為 08、09、14 或 APP_CON_TYPE 不為空。",
+      "src": [
+        "STT-DOC-002#4.3 EPROZ00200-REQ-003 Reference Search"
+      ]
+    },
+    {
+      "id": "STT-REQ-025",
+      "text": "需要參考案件的情境下，未搜尋或未勾選任何一筆結果時不得送出建案，並於按鈕後顯示 Please search 或 Please select。",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.3 前端驗證"
+      ]
+    },
+    {
+      "id": "STT-REQ-026",
+      "text": "APPLICATION_NO 由起案分行、起案部門、起案年、起案月、個金企金別、有擔無擔別、案件類型與 4 位流水號串接而成。",
+      "src": [
+        "STT-DOC-003#案件取號",
+        "STT-DOC-002#4.5 EPROZ00200-REQ-005 Application Number"
+      ],
+      "from": "REQ-005"
+    },
+    {
+      "id": "STT-REQ-027",
+      "text": "取號時先更新當月流水號並檢查更新筆數：更新 1 筆則直接取號；更新 0 筆則新增本月流水號後取號；更新超過 1 筆視為系統錯誤。",
+      "src": [
+        "STT-DOC-003#案件取號"
+      ]
+    },
+    {
+      "id": "STT-REQ-028",
+      "text": "同一年月、同一 APP_TYPE、同一 lonTypeCode 下產生的 APPLICATION_NO 不得重複。",
+      "src": [
+        "STT-DOC-002#5.1 DB 影響矩陣",
+        "STT-DOC-003#案件取號"
+      ]
+    },
+    {
+      "id": "STT-REQ-029",
+      "text": "建案成功必須新增一筆 TB_LON_SUMMARY_INFO，CASE_PROGRESS 寫入 01，並帶入 lonAttribute、secureAttribute、lonTypeCode、productCode、mtgProductCode、起案時間、起案年月、分行部門與系統版本。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯",
+        "STT-DOC-002#5.1 DB 影響矩陣"
+      ]
+    },
+    {
+      "id": "STT-REQ-030",
+      "text": "起案人角色為 001 時將員工代號寫入 AO_ASSISTANT_CODE 且不填 AO_CODE；角色非 001 時寫入 AO_CODE 且不填 AO_ASSISTANT_CODE；兩者皆需寫入 CURRENT_USER_ID。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯",
+        "STT-DOC-002#1.2 角色與使用者"
+      ]
+    },
+    {
+      "id": "STT-REQ-031",
+      "text": "建案成功必須新增一筆 TB_APP_HISTORY，記錄處理人員代號、姓名、分行代號、分行名稱與處理時間。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯",
+        "STT-DOC-002#5.1 DB 影響矩陣"
+      ]
+    },
+    {
+      "id": "STT-REQ-032",
+      "text": "TB_LON_SUMMARY_INFO.REF_APPLICATION_NO 僅在特定 lonTypeCode 條件下寫入上行傳來的 refApplicationNo，其餘情境不填。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ]
+    },
+    {
+      "id": "STT-REQ-033",
+      "text": "建案必須依 lonAttribute 與 secureAttribute 的四種組合，把預設畫面檢核資料寫入對應的 TB_CHECK_POINTS_IS、TB_CHECK_POINTS_IU、TB_CHECK_POINTS_CS 或 TB_CHECK_POINTS_CU。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ]
+    },
+    {
+      "id": "STT-REQ-034",
+      "text": "lonTypeCode 為 02、03 或 04 時，必須依 IS／IU／CS／CU 複製參考案件資料到對應的借款人、共借人、保證人與擔保品資料表；清單為空的項目跳過不寫。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯",
+        "STT-DOC-002#4.6 EPROZ00200-REQ-006 Copy Matrix"
+      ],
+      "from": "REQ-006"
+    },
+    {
+      "id": "STT-REQ-035",
+      "text": "複製參考案件資料時必須套用逐欄的排除與清除規則，包含地址代碼補零正規化、保證人與提供人 CR_DEL 重設為 N、已刪除擔保品不複製、鑑價與現勘檔案路徑欄位清空、任職年資與收入欄位排除。",
+      "src": [
+        "STT-DOC-002#4.7 EPROZ00200-REQ-007 Copy Data Rules"
+      ],
+      "from": "REQ-007"
+    },
+    {
+      "id": "STT-REQ-036",
+      "text": "個金案件複製後，若保證人清單與擔保人公司清單皆為空則 IS_ANY_GUARANTOR 改為 N 並將 EPROISU0130 檢核值改為 N；擔保品提供人清單為空時 IS_ANY_COLLATERAL_PROVIDER 與 EPROISU0140 改為 N，不為空則改為 Y。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ]
+    },
+    {
+      "id": "STT-REQ-037",
+      "text": "企金案件複製後，依相同規則更新企金主借款人資料的 IS_ANY_GUARANTOR、IS_ANY_COLLATERAL_PROVIDER 與 EPROCSU0130、EPROCSU0140 檢核值。",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ]
+    },
+    {
+      "id": "STT-REQ-038",
+      "text": "預設畫面檢核清單必須把取得的 pageCode 字串先以分號拆成項目，再把含冒號的項目拆成父頁面與子頁面群，子頁面群再以逗號拆開，最終只保留最小頁面項目。",
+      "src": [
+        "STT-DOC-003#建立預設畫面檢核Map"
+      ]
+    },
+    {
+      "id": "STT-REQ-039",
+      "text": "建案流程中任一步驟失敗必須整筆 rollback，不得留下只寫了一部分的新案件資料。",
+      "src": [
+        "STT-DOC-002#5.2 Transaction / Rollback"
+      ]
+    },
+    {
+      "id": "STT-REQ-040",
+      "text": "建案成功後必須回傳新產生的 applicationNo，前端據以取得目標畫面並跳轉。",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-005#欄位說明"
+      ]
+    },
+    {
+      "id": "STT-REQ-041",
+      "text": "個金 Renew 或 Change Condition 建案成功後跳轉至 EPROZ00800 Revised Item 畫面，其餘情境跳轉至 Main Borrower Info 畫面。",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "STT-AC-001",
+      "req": [
+        "STT-REQ-001"
+      ],
+      "given": "同一瀏覽器 session 中已經開過一件案件，session 內留有前一件的 applicationNo",
+      "when": "使用者再次從選單進入 New Case Application 頁",
+      "then": "session 內的案件資訊被清空，畫面上不顯示任何前次案件的案號或已選欄位",
+      "src": [
+        "STT-DOC-002#4.1 EPROZ00200-REQ-001 初始化"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-002",
+      "req": [
+        "STT-REQ-002"
+      ],
+      "given": "AO（002）剛進入 New Case Application 頁",
+      "when": "頁面完成初始化",
+      "then": "Loan Type 下拉取得 LOAN_TYPE 共用參數、Sub-Product Type(2) 下拉取得 MTG_PRODUCT 共用參數，兩者第一筆皆為 Please select",
+      "src": [
+        "STT-DOC-002#4.1 EPROZ00200-REQ-001 初始化",
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-003",
+      "req": [
+        "STT-REQ-003"
+      ],
+      "given": "使用者已選 Customer Type=Individual、Product Type=Secured，Sub-Product Type(1) 已載入對應選項",
+      "when": "使用者把 Product Type 改成 Unsecured",
+      "then": "Sub-Product Type(1) 重新向後端取得選項並改為 Unsecured 對應的清單，原本選到的值不被保留",
+      "src": [
+        "STT-DOC-002#4.1 EPROZ00200-REQ-001 初始化"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-004",
+      "req": [
+        "STT-REQ-004"
+      ],
+      "given": "以 AO Assistant（001）身分登入",
+      "when": "從選單開啟 E-Proposal >> New Case Application >> Generate New Case",
+      "then": "頁面正常開啟且可操作建案欄位",
+      "src": [
+        "STT-DOC-005#作業說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-005",
+      "req": [
+        "STT-REQ-004",
+        "STT-REQ-005"
+      ],
+      "given": "以非 001／002 的角色登入並取得有效 token",
+      "when": "略過畫面直接呼叫建案 API，帶入完整且合法的建案欄位",
+      "then": "API 回傳 code=E998、message=Authentication error，且案件相關資料表無任何新增資料",
+      "src": [
+        "STT-DOC-005#作業說明",
+        "STT-DOC-003#處理結果代碼表"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-006",
+      "req": [
+        "STT-REQ-006",
+        "STT-REQ-012"
+      ],
+      "given": "建案請求的其他欄位皆填妥",
+      "when": "以 lonAttribute 為空字串呼叫建案 API",
+      "then": "API 回傳 code=E102、message=lonAttribute must not be blank，且未產生新案號",
+      "src": [
+        "STT-DOC-003#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-007",
+      "req": [
+        "STT-REQ-007",
+        "STT-REQ-012"
+      ],
+      "given": "建案請求的其他欄位皆填妥",
+      "when": "以 secureAttribute 為空字串呼叫建案 API",
+      "then": "API 回傳 code=E102、message=secureAttribute must not be blank，且未產生新案號",
+      "src": [
+        "STT-DOC-003#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-008",
+      "req": [
+        "STT-REQ-008",
+        "STT-REQ-012"
+      ],
+      "given": "建案請求的其他欄位皆填妥",
+      "when": "以 productCode 為空字串呼叫建案 API",
+      "then": "API 回傳 code=E102、message=productCode must not be blank，且未產生新案號",
+      "src": [
+        "STT-DOC-003#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-009",
+      "req": [
+        "STT-REQ-009",
+        "STT-REQ-012"
+      ],
+      "given": "建案請求為 lonAttribute=I、secureAttribute=S、productCode=01 的房貸組合，其他欄位填妥",
+      "when": "以 mtgProductCode 為空字串呼叫建案 API",
+      "then": "API 回傳 code=E102、message=mtgProductCode must not be blank，且未產生新案號",
+      "src": [
+        "STT-DOC-003#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-010",
+      "req": [
+        "STT-REQ-009"
+      ],
+      "given": "建案請求為 lonAttribute=I、secureAttribute=S、productCode=02 的非房貸組合，其他必填欄位填妥",
+      "when": "以 mtgProductCode 為空字串呼叫建案 API",
+      "then": "API 回傳 code=0000 建案成功，TB_LON_SUMMARY_INFO 的 MTG_PRODUCT_CODE 為空",
+      "src": [
+        "STT-DOC-003#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-011",
+      "req": [
+        "STT-REQ-010",
+        "STT-REQ-012"
+      ],
+      "given": "建案請求的其他欄位皆填妥",
+      "when": "以 lonTypeCode 為空字串呼叫建案 API",
+      "then": "API 回傳 code=E102、message=lonTypeCode must not be blank，且未產生新案號",
+      "src": [
+        "STT-DOC-003#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-012",
+      "req": [
+        "STT-REQ-011",
+        "STT-REQ-012"
+      ],
+      "given": "建案請求的 lonTypeCode 為 02、03 或 04，其他必填欄位填妥",
+      "when": "以 refApplicationNo 為空字串呼叫建案 API",
+      "then": "API 回傳 code=E102、message 指出 refApplicationNo must not be blank，且未產生新案號",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-002#4.4 EPROZ00200-REQ-004 Execute 建案"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-013",
+      "req": [
+        "STT-REQ-011"
+      ],
+      "given": "建案請求的 lonTypeCode 為 01（新案），其他必填欄位填妥",
+      "when": "以 refApplicationNo 為空字串呼叫建案 API",
+      "then": "待確認：上行表把 refApplicationNo 標為一律必填，說明卻只在 02／03／04 才必填，無法判定新案應成功建立還是回 E102",
+      "src": [
+        "STT-DOC-003#API Body"
+      ],
+      "blocked": [
+        "STT-ISS-008"
+      ]
+    },
+    {
+      "id": "STT-AC-014",
+      "req": [
+        "STT-REQ-012"
+      ],
+      "given": "建案請求同時缺少多個必填欄位",
+      "when": "呼叫建案 API",
+      "then": "回傳 code=E102，且 message 指出的欄位名稱與實際缺漏的上行欄位名一致，不得只回泛用訊息",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-003#處理結果代碼表"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-015",
+      "req": [
+        "STT-REQ-013"
+      ],
+      "given": "使用者已選 Customer Type=Individual 且 Product Type=Secured，Sub-Product Type(1) 已載入選項",
+      "when": "使用者把 Customer Type 改成 Corporate",
+      "then": "Sub-Product Type(1) 的選項內容換成 Corporate + Secured 對應的清單",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.1 欄位規則"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-016",
+      "req": [
+        "STT-REQ-014"
+      ],
+      "given": "使用者在新起案件頁",
+      "when": "選擇 Customer Type=Individual、Product Type=Secured、Sub-Product Type(1)=Mortgage Loan(01)",
+      "then": "畫面顯示 Sub-Product Type(2) 欄位，欄位名稱前有必填星號，預設顯示 Please select",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-017",
+      "req": [
+        "STT-REQ-014",
+        "STT-REQ-018"
+      ],
+      "given": "使用者已選 Individual + Secured + Mortgage Loan(01)，Sub-Product Type(2) 維持 Please select",
+      "when": "按下建案按鈕",
+      "then": "在 Sub-Product Type(2) 欄位後顯示 Please select（message key COMMON_UI_PLEASE_SELECT），且不呼叫建案 API",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-018",
+      "req": [
+        "STT-REQ-015"
+      ],
+      "given": "使用者在新起案件頁",
+      "when": "選擇 Customer Type=Corporate 且 Product Type=Unsecured",
+      "then": "Sub-Product Type(1) 自動選中選項清單的第二筆資料，而不是停在 Please select",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-019",
+      "req": [
+        "STT-REQ-015"
+      ],
+      "given": "使用者在新起案件頁",
+      "when": "選擇 Customer Type=Individual 且 Product Type=Secured",
+      "then": "Sub-Product Type(1) 第一筆顯示 Please select 且維持未選狀態",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-020",
+      "req": [
+        "STT-REQ-016"
+      ],
+      "given": "使用者已選 Customer Type=Individual、Product Type=Secured",
+      "when": "Sub-Product Type(1) 選擇 Cooperated Borey Housing Loan(02)",
+      "then": "Loan Type 的選項只有 New(01)、Additional(02)、Change Condition(04)，不含 Renew(03)",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#4.2 EPROZ00200-REQ-002 Product / Loan Type 規則"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-021",
+      "req": [
+        "STT-REQ-016"
+      ],
+      "given": "使用者選擇 Staff Housing Loan(03) 或 Staff Vehicle Loan(01/Unsecured)",
+      "when": "展開 Loan Type 下拉",
+      "then": "待確認：PRD 要求含 91／92／94，前端規格與後端取號表則已排除 91～94，無法判定正確選項集合",
+      "src": [
+        "STT-DOC-002#4.2 EPROZ00200-REQ-002 Product / Loan Type 規則",
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": [
+        "STT-ISS-001"
+      ]
+    },
+    {
+      "id": "STT-AC-022",
+      "req": [
+        "STT-REQ-016"
+      ],
+      "given": "使用者已選 Customer Type=Individual、Product Type=Secured、Sub-Product Type(1) 為上述特例以外的產品",
+      "when": "展開 Loan Type 下拉",
+      "then": "選項包含 New(01)、Additional(02)、Renew(03)、Change Condition(04)",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-023",
+      "req": [
+        "STT-REQ-017"
+      ],
+      "given": "使用者已選妥 Customer Type、Product Type 與 Sub-Product Type(1)",
+      "when": "Loan Type 選擇 Additional(02)、Renew(03) 或 Change Condition(04)",
+      "then": "畫面顯示 Matching Engine 區塊",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.2 搜尋區塊顯示規則"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-024",
+      "req": [
+        "STT-REQ-017"
+      ],
+      "given": "Matching Engine 區塊因先前選了 Additional 而顯示中",
+      "when": "Loan Type 改選 New(01)",
+      "then": "Matching Engine 區塊隱藏",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-025",
+      "req": [
+        "STT-REQ-018"
+      ],
+      "given": "使用者在新起案件頁，Customer Type、Product Type、Sub-Product Type(1)、Loan Type 中至少一項未選",
+      "when": "按下建案按鈕",
+      "then": "在每個未選欄位後顯示 Please select（message key COMMON_UI_PLEASE_SELECT），且不呼叫建案 API",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-002#3.3 前端驗證"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-026",
+      "req": [
+        "STT-REQ-019"
+      ],
+      "given": "使用者已選 Customer Type 與 Loan Type 使 Matching Engine 顯示",
+      "when": "檢視 Matching Engine 的查詢欄位",
+      "then": "個金 Additional 顯示 Doc No.；個金 Renew／Change Condition 顯示 Date of Birth；企金 Additional／Renew／Change Condition 顯示 Register No.，不屬於該情境的欄位不出現",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-027",
+      "req": [
+        "STT-REQ-020"
+      ],
+      "given": "Matching Engine 顯示中且所有查詢欄位皆為空",
+      "when": "按下 Search 鈕",
+      "then": "在該情境的查詢欄位後顯示 Please enter the value（message key COMMON_VALIDATE_001），且不呼叫清單查詢 API",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-028",
+      "req": [
+        "STT-REQ-021"
+      ],
+      "given": "Matching Engine 顯示中，使用者只填了 Application No",
+      "when": "按下 Search 鈕",
+      "then": "在該情境所需的識別欄位後顯示 Please enter the value，且不呼叫清單查詢 API",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-005#搜尋補充 (QA)"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-029",
+      "req": [
+        "STT-REQ-022"
+      ],
+      "given": "資料庫中同一姓名關鍵字的案件分屬登入者所屬部門與其他部門",
+      "when": "只用 Name of Applicant 做模糊查詢",
+      "then": "查詢結果只含 BELONG_DEP_CODE 等於登入者部門的案件，其他部門案件不出現",
+      "src": [
+        "STT-DOC-005#搜尋補充 (QA)"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-030",
+      "req": [
+        "STT-REQ-022"
+      ],
+      "given": "存在一件屬於其他部門、但主借款人姓名與生日已知的案件",
+      "when": "以該案件的 Application No 搭配正確的 Name of Applicant 與 Date of Birth 查詢",
+      "then": "該跨部門案件出現在查詢結果中",
+      "src": [
+        "STT-DOC-005#搜尋補充 (QA)"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-031",
+      "req": [
+        "STT-REQ-023"
+      ],
+      "given": "清單查詢請求的搜尋條件已填妥",
+      "when": "以 page、size、deptCode、loanAttribute、secureAttribute、langType 其中一項為空呼叫清單查詢 API",
+      "then": "回傳 code=E102，message 指出該欄位 must not be blank",
+      "src": [
+        "STT-DOC-004#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-032",
+      "req": [
+        "STT-REQ-023"
+      ],
+      "given": "清單查詢請求的必填欄位皆填妥",
+      "when": "applicantName、applicationNo、docNo、dateOfBirth、registerNo 五項全部為空字串",
+      "then": "回傳 code=E102，message 為 applicantName or applicationNo or docNo or dateOfBirth or registerNo must not be blank",
+      "src": [
+        "STT-DOC-004#API Body"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-033",
+      "req": [
+        "STT-REQ-024"
+      ],
+      "given": "資料庫中同時存在符合與不符合引用資格的案件",
+      "when": "以相同條件查詢參考案件清單",
+      "then": "待確認：資格條件只在 PRD 出現，清單查詢的後端規格書沒有 CASE_PROGRESS 或 APP_CON_TYPE 的過濾描述，無法判定哪些案件應被排除",
+      "src": [
+        "STT-DOC-002#4.3 EPROZ00200-REQ-003 Reference Search"
+      ],
+      "blocked": [
+        "STT-ISS-005"
+      ]
+    },
+    {
+      "id": "STT-AC-034",
+      "req": [
+        "STT-REQ-025"
+      ],
+      "given": "Loan Type 選了 Additional，Matching Engine 顯示中且尚未搜尋",
+      "when": "直接按下建案按鈕",
+      "then": "在 Search 鈕後顯示 Please search（message key COMMON_UI_PLEASE_SEARCH），且不呼叫建案 API",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-035",
+      "req": [
+        "STT-REQ-025"
+      ],
+      "given": "Loan Type 選了 Additional，已搜尋出結果但未勾選任何一列",
+      "when": "按下建案按鈕",
+      "then": "在建案按鈕後顯示 Please select（message key COMMON_UI_PLEASE_SELECT），且不呼叫建案 API",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-036",
+      "req": [
+        "STT-REQ-026"
+      ],
+      "given": "以特定分行與部門的使用者建立案件",
+      "when": "檢視回傳的 applicationNo 各段內容",
+      "then": "待確認：後端取號表的欄位標題順序與來源對應相反，PRD 又寫 branchId + deptCode，無法判定前兩段應為分行在前或部門在前、各幾碼",
+      "src": [
+        "STT-DOC-003#案件取號",
+        "STT-DOC-002#4.5 EPROZ00200-REQ-005 Application Number"
+      ],
+      "blocked": [
+        "STT-ISS-004"
+      ]
+    },
+    {
+      "id": "STT-AC-037",
+      "req": [
+        "STT-REQ-027"
+      ],
+      "given": "本月同一 APP_TYPE 與 lonTypeCode 的流水號紀錄已存在",
+      "when": "執行建案取號",
+      "then": "流水號紀錄被更新 1 筆，取得的流水號比前一次大 1，且不新增流水號紀錄",
+      "src": [
+        "STT-DOC-003#案件取號"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-038",
+      "req": [
+        "STT-REQ-027"
+      ],
+      "given": "本月同一 APP_TYPE 與 lonTypeCode 的流水號紀錄尚不存在",
+      "when": "執行建案取號",
+      "then": "更新筆數為 0 後新增一筆本月流水號紀錄，並取得該筆流水號",
+      "src": [
+        "STT-DOC-003#案件取號"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-039",
+      "req": [
+        "STT-REQ-027"
+      ],
+      "given": "流水號表因資料異常存在重複鍵值，導致更新影響超過 1 筆",
+      "when": "執行建案取號",
+      "then": "系統以錯誤終止並回傳 E999 System error，不得繼續建案，且不留下新案資料",
+      "src": [
+        "STT-DOC-003#案件取號"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-040",
+      "req": [
+        "STT-REQ-028"
+      ],
+      "given": "兩個使用者同時以相同的年月、lonAttribute、secureAttribute 與 lonTypeCode 建案",
+      "when": "兩支建案請求同時送出",
+      "then": "兩件案件取得的 applicationNo 不相同，且流水號沒有重複或跳號",
+      "src": [
+        "STT-DOC-002#5.1 DB 影響矩陣",
+        "STT-DOC-003#案件取號"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-041",
+      "req": [
+        "STT-REQ-029"
+      ],
+      "given": "以合法欄位組合送出建案",
+      "when": "建案成功",
+      "then": "TB_LON_SUMMARY_INFO 新增一筆，CASE_PROGRESS=01，APPLICATION_NO 等於回傳值，LON_ATTRIBUTE、SECURE_ATTRIBUTE、LON_TYPE_CODE、PRODUCT_CODE 與上行參數一致，APPLICATION_DATE 與 RECEIVED_DATE 為起案時間，GET_APPNO_DATE 為起案年月且格式為 YYYYMM",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-042",
+      "req": [
+        "STT-REQ-030"
+      ],
+      "given": "以角色 001（AO Assistant）建案",
+      "when": "建案成功",
+      "then": "TB_LON_SUMMARY_INFO 的 AO_ASSISTANT_CODE 為該員工代號、AO_CODE 為空，CURRENT_USER_ID 為該員工代號",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-043",
+      "req": [
+        "STT-REQ-030"
+      ],
+      "given": "以角色 002（AO）建案",
+      "when": "建案成功",
+      "then": "TB_LON_SUMMARY_INFO 的 AO_CODE 為該員工代號、AO_ASSISTANT_CODE 為空，CURRENT_USER_ID 為該員工代號",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-044",
+      "req": [
+        "STT-REQ-031"
+      ],
+      "given": "以合法欄位組合送出建案",
+      "when": "建案成功",
+      "then": "TB_APP_HISTORY 新增一筆，APPLICATION_NO 等於新案號，處理人員代號、姓名、分行代號、分行名稱與 API Header 帶入的登入資訊一致，PROCESS_DATE 為執行當下的 TIMESTAMP",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-045",
+      "req": [
+        "STT-REQ-031"
+      ],
+      "given": "建案成功後檢視 TB_APP_HISTORY 的 APP_PROCESS_CODE",
+      "when": "比對三份文件的定義",
+      "then": "待確認：PRD 記 01、後端規格書記 00、Bible 把 00 與 01 分別定義為新建案與進件中，無法判定應寫入哪個值",
+      "src": [
+        "STT-DOC-003#資料處理邏輯",
+        "STT-DOC-002#5.1 DB 影響矩陣"
+      ],
+      "blocked": [
+        "STT-ISS-002"
+      ]
+    },
+    {
+      "id": "STT-AC-046",
+      "req": [
+        "STT-REQ-032"
+      ],
+      "given": "以帶有 refApplicationNo 的請求建案",
+      "when": "檢視 TB_LON_SUMMARY_INFO.REF_APPLICATION_NO",
+      "then": "待確認：規格寫成 lonTypeCode 同時等於 03 且 04，條件永遠不成立，無法判定哪些 lonTypeCode 應寫入該欄位",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": [
+        "STT-ISS-003"
+      ]
+    },
+    {
+      "id": "STT-AC-047",
+      "req": [
+        "STT-REQ-033"
+      ],
+      "given": "分別以 I+S、I+U、C+S、C+U 四種組合建案",
+      "when": "建案成功",
+      "then": "預設畫面檢核資料分別寫入 TB_CHECK_POINTS_IS、TB_CHECK_POINTS_IU、TB_CHECK_POINTS_CS、TB_CHECK_POINTS_CU，且不會寫入其他三張表",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-048",
+      "req": [
+        "STT-REQ-033"
+      ],
+      "given": "以企金無擔（C+U）組合建案",
+      "when": "檢視 TB_CHECK_POINTS_CU 的頁面項目",
+      "then": "待確認：CU 的 checkpoint 排除頁面清單與排除原因尚未確認，無法判定哪些頁面應被排除",
+      "src": [
+        "STT-DOC-003#資料處理邏輯",
+        "STT-DOC-002#4.6 EPROZ00200-REQ-006 Copy Matrix"
+      ],
+      "blocked": [
+        "STT-ISS-011"
+      ]
+    },
+    {
+      "id": "STT-AC-049",
+      "req": [
+        "STT-REQ-034"
+      ],
+      "given": "以 lonAttribute=I、lonTypeCode=02 並指定一件資料完整的參考案件建案",
+      "when": "建案成功",
+      "then": "新案號下的 TB_MAIN_BORROWER_PERSONAL_INFO、TB_MAIN_BORROWER_WORK_INFO、TB_MAIN_BORROWER_FAMILY_INFO、TB_CO_BORROWER_* 與 TB_GUARANTOR_* 皆有由參考案件複製而來的資料，且企金的 TB_MAIN_BORROWER_INFO_CORP 無資料",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-050",
+      "req": [
+        "STT-REQ-034"
+      ],
+      "given": "以 lonAttribute=C、secureAttribute=S、lonTypeCode=02 並指定一件資料完整的參考案件建案",
+      "when": "建案成功",
+      "then": "新案號下的 TB_MAIN_BORROWER_INFO_CORP、TB_CO_BORROWER_INFO_CORP、TB_GUARANTOR_* 與擔保品相關資料表皆有複製資料，且個金的 TB_MAIN_BORROWER_PERSONAL_INFO 無資料",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-051",
+      "req": [
+        "STT-REQ-034"
+      ],
+      "given": "參考案件沒有任何保證人與擔保品資料",
+      "when": "以 lonTypeCode=02 建案",
+      "then": "保證人與擔保品相關資料表在新案號下不新增任何列，建案仍然成功",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-052",
+      "req": [
+        "STT-REQ-034"
+      ],
+      "given": "以 lonAttribute=I、secureAttribute=U（個金無擔）、lonTypeCode=02 建案",
+      "when": "建案成功",
+      "then": "擔保品提供人相關資料表在新案號下不新增任何列，個人借款人與保證人資料照常複製",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-053",
+      "req": [
+        "STT-REQ-035"
+      ],
+      "given": "參考案件含已刪除的擔保品、有鑑價檔案路徑、且保證人 CR_DEL 為 Y 與 N 混雜",
+      "when": "以 lonTypeCode=02 建案並檢視複製結果的逐欄內容",
+      "then": "待確認：IU／CS／CU 的逐欄矩陣與版本 mapping 皆標示待補，無法逐欄判定哪些欄位應清空或排除",
+      "src": [
+        "STT-DOC-002#4.7 EPROZ00200-REQ-007 Copy Data Rules"
+      ],
+      "blocked": [
+        "STT-ISS-006"
+      ]
+    },
+    {
+      "id": "STT-AC-054",
+      "req": [
+        "STT-REQ-036"
+      ],
+      "given": "以 lonAttribute=I、secureAttribute=S、lonTypeCode=02 建案，且參考案件的保證人清單、擔保人公司清單與擔保品提供人清單皆為空",
+      "when": "建案成功",
+      "then": "個人主借款人資料的 IS_ANY_GUARANTOR 與 IS_ANY_COLLATERAL_PROVIDER 皆為 N，檢核資料中 EPROISU0130 與 EPROISU0140 皆為 N",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-055",
+      "req": [
+        "STT-REQ-036"
+      ],
+      "given": "以 lonAttribute=I、secureAttribute=S、lonTypeCode=02 建案，且參考案件的擔保品提供人清單不為空",
+      "when": "建案成功",
+      "then": "個人主借款人資料的 IS_ANY_COLLATERAL_PROVIDER 為 Y，檢核資料中 EPROISU0140 為 Y",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-056",
+      "req": [
+        "STT-REQ-037"
+      ],
+      "given": "以 lonAttribute=C、secureAttribute=S、lonTypeCode=02 建案，且參考案件的保證人清單與擔保人公司清單皆為空",
+      "when": "建案成功",
+      "then": "企金主借款人資料的 IS_ANY_GUARANTOR 為 N，檢核資料中 EPROCSU0130 為 N",
+      "src": [
+        "STT-DOC-003#資料處理邏輯"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-057",
+      "req": [
+        "STT-REQ-038"
+      ],
+      "given": "取得的 pageCode 字串同時含分號分隔的頁面、以及一組用冒號帶出子頁面並以逗號分隔的父子結構",
+      "when": "系統組裝預設畫面檢核清單",
+      "then": "清單只包含最小頁面項目，父子結構被展開成父頁面與各子頁面，沒有任何項目仍含冒號或逗號",
+      "src": [
+        "STT-DOC-003#建立預設畫面檢核Map"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-058",
+      "req": [
+        "STT-REQ-039"
+      ],
+      "given": "建案流程在複製參考案件資料的中途發生失敗",
+      "when": "API 結束回應",
+      "then": "回傳系統錯誤，且該次取得的新案號在案件主檔、歷程、檢核與所有複製資料表皆查不到任何一列",
+      "src": [
+        "STT-DOC-002#5.2 Transaction / Rollback"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-059",
+      "req": [
+        "STT-REQ-040"
+      ],
+      "given": "以合法欄位組合送出建案",
+      "when": "建案成功",
+      "then": "回傳 code=0000、message 為成功訊息，data.applicationNo 為新產生的案號且與 TB_LON_SUMMARY_INFO 的 APPLICATION_NO 一致",
+      "src": [
+        "STT-DOC-003#API Body",
+        "STT-DOC-003#處理結果代碼表"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-060",
+      "req": [
+        "STT-REQ-041"
+      ],
+      "given": "以 Customer Type=Individual、Loan Type=Renew 或 Change Condition 完成建案",
+      "when": "API 成功回應後前端取得目標畫面",
+      "then": "畫面跳轉至 EPROZ00800 Revised Item 且可編輯",
+      "src": [
+        "STT-DOC-005#欄位說明"
+      ],
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-061",
+      "req": [
+        "STT-REQ-041"
+      ],
+      "given": "案件為個人戶新案",
+      "when": "建立案件並進入主流程",
+      "then": "系統進入 ISU 頁面族群的 Main Borrower Info 畫面且可編輯",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-001#Given / When / Then 共同驗收範例"
+      ],
+      "from": "AC-BIBLE-001",
+      "blocked": []
+    },
+    {
+      "id": "STT-AC-062",
+      "req": [
+        "STT-REQ-041"
+      ],
+      "given": "案件為公司戶新案",
+      "when": "建立案件並進入主流程",
+      "then": "系統進入 CSU 頁面族群的 Main Borrower Info 畫面且可編輯",
+      "src": [
+        "STT-DOC-005#欄位說明",
+        "STT-DOC-001#Given / When / Then 共同驗收範例"
+      ],
+      "from": "AC-BIBLE-003",
+      "blocked": []
+    }
+  ],
+  "tests": [
+    {
+      "id": "STT-TC-001",
+      "ac": [
+        "STT-AC-001"
+      ],
+      "title": "重新進入新起案件頁應清掉前一件的 session",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入",
+        "先建立一件個金新案（I/S/02/01），記下回傳的 applicationNo"
+      ],
+      "steps": [
+        "建案完成停留在後續畫面後，從選單重新點選 E-Proposal >> New Case Application >> Generate New Case",
+        "檢視畫面上 Customer Type、Product Type、Sub-Product Type(1)、Loan Type 的狀態",
+        "檢視瀏覽器 session 中是否還留有前一件的 applicationNo"
+      ],
+      "expected": [
+        "四個分類欄位皆回到未選狀態，下拉第一筆顯示 Please select",
+        "session 內不再有前一件的 applicationNo",
+        "畫面任何位置都不顯示前一件的案號"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "session 殘留會讓後續操作寫到前一件案子上，屬資料錯置；重新進入功能是每天必走的路徑。"
+      },
+      "from": "TC-001"
+    },
+    {
+      "id": "STT-TC-002",
+      "ac": [
+        "STT-AC-001"
+      ],
+      "title": "從其他功能切換回新起案件頁也要清 session",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入",
+        "先建立一件案件後，改開啟另一個 E-Proposal 功能"
+      ],
+      "steps": [
+        "在其他功能停留後，再從選單進入 New Case Application",
+        "檢視分類欄位狀態與 session 內的案件資訊"
+      ],
+      "expected": [
+        "分類欄位回到未選狀態",
+        "session 內不含任何案件的 applicationNo"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "資料錯置後果與直接重入相同；但先繞到別的功能再回來屬較少見的操作順序。"
+      }
+    },
+    {
+      "id": "STT-TC-003",
+      "ac": [
+        "STT-AC-002"
+      ],
+      "title": "初始化取得 LOAN_TYPE 與 MTG_PRODUCT 參數",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入",
+        "共用參數檔中 LOAN_TYPE 與 MTG_PRODUCT 均有資料"
+      ],
+      "steps": [
+        "進入 New Case Application 頁",
+        "展開 Loan Type 下拉並記錄選項",
+        "選擇 Individual + Secured + Mortgage Loan(01) 使 Sub-Product Type(2) 顯示，展開並記錄選項"
+      ],
+      "expected": [
+        "Loan Type 第一筆為 Please select，其後為 LOAN_TYPE 參數檔回傳的項目",
+        "Sub-Product Type(2) 第一筆為 Please select，其後為 MTG_PRODUCT 參數檔回傳的項目"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "取不到代碼表就無法建案，等於功能不可用；初始化是進入頁面必經步驟。"
+      },
+      "from": "TC-001"
+    },
+    {
+      "id": "STT-TC-004",
+      "ac": [
+        "STT-AC-002"
+      ],
+      "title": "共用參數查詢失敗時的畫面行為",
+      "type": "integration",
+      "setup": [
+        "以 AO（002）登入",
+        "讓共用參數檔 API 回傳非 0000 的錯誤"
+      ],
+      "steps": [
+        "進入 New Case Application 頁",
+        "觀察 Loan Type 下拉與畫面提示"
+      ],
+      "expected": [
+        "Loan Type 不出現任何非 Please select 的選項",
+        "畫面顯示可辨識的錯誤提示，不是空白下拉讓使用者以為沒有選項可選"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "Low",
+        "level": "Low",
+        "why": "參數檔失敗時使用者無法繼續但也不會產生錯誤資料；共用參數檔異常屬少見情況。"
+      }
+    },
+    {
+      "id": "STT-TC-005",
+      "ac": [
+        "STT-AC-003"
+      ],
+      "title": "變更 Product Type 後重新取得產品選項",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Customer Type=Individual、Product Type=Secured，Sub-Product Type(1) 已載入並選了任一項"
+      ],
+      "steps": [
+        "把 Product Type 改成 Unsecured",
+        "展開 Sub-Product Type(1) 並記錄選項內容",
+        "檢查原先選到的值是否還留著"
+      ],
+      "expected": [
+        "Sub-Product Type(1) 的選項換成 Individual + Unsecured 對應的清單",
+        "原先選到的值被清掉，不會沿用到新的產品別"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "沿用舊產品別會讓案件帶著不合法的產品組合建立；切換擔保別是建案時常見動作。"
+      }
+    },
+    {
+      "id": "STT-TC-006",
+      "ac": [
+        "STT-AC-003"
+      ],
+      "title": "改回原本的組合仍須重新取得選項",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured，Sub-Product Type(1) 已載入"
+      ],
+      "steps": [
+        "把 Product Type 改成 Unsecured，等選項載入",
+        "再把 Product Type 改回 Secured",
+        "展開 Sub-Product Type(1) 檢視選項與選中狀態"
+      ],
+      "expected": [
+        "Sub-Product Type(1) 再次向後端取得 Secured 對應的選項",
+        "欄位回到未選狀態，不會自動還原成第一次選過的值"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "Low",
+        "level": "Low",
+        "why": "來回切換後即使殘留舊值，送出前的必填檢核仍會擋下；來回切換屬少見操作。"
+      }
+    },
+    {
+      "id": "STT-TC-007",
+      "ac": [
+        "STT-AC-004"
+      ],
+      "title": "AO Assistant（001）可進入新起案件作業",
+      "type": "auth",
+      "setup": [
+        "以角色 001（AO Assistant）登入"
+      ],
+      "steps": [
+        "從選單開啟 E-Proposal >> New Case Application >> Generate New Case",
+        "嘗試點選 Customer Type 的 Individual"
+      ],
+      "expected": [
+        "頁面正常開啟，Type 區塊的欄位可點選",
+        "沒有出現權限不足的提示"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "授權角色被誤擋等於主要業務無法起案；001 是日常起案的兩種角色之一。"
+      }
+    },
+    {
+      "id": "STT-TC-008",
+      "ac": [
+        "STT-AC-004"
+      ],
+      "title": "AO（002）可進入新起案件作業",
+      "type": "auth",
+      "setup": [
+        "以角色 002（AO）登入"
+      ],
+      "steps": [
+        "從選單開啟 E-Proposal >> New Case Application >> Generate New Case",
+        "嘗試點選 Customer Type 的 Corporate"
+      ],
+      "expected": [
+        "頁面正常開啟，Type 區塊的欄位可點選",
+        "沒有出現權限不足的提示"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "授權角色被誤擋等於主要業務無法起案；002 是日常起案的兩種角色之一。"
+      }
+    },
+    {
+      "id": "STT-TC-009",
+      "ac": [
+        "STT-AC-005"
+      ],
+      "title": "CR 角色直接呼叫建案 API 應被 API 層擋下",
+      "type": "auth",
+      "setup": [
+        "以角色 003（CR）登入取得有效 token",
+        "備妥一組合法建案參數：lonAttribute=I、secureAttribute=S、productCode=02、lonTypeCode=01、refApplicationNo 空"
+      ],
+      "steps": [
+        "不經過畫面，直接以 CR 的 token 呼叫建案 API 並帶入上述參數",
+        "記錄回傳的 code 與 message",
+        "以該次請求的年月與 APP_TYPE 查 TB_LON_SUMMARY_INFO 與流水號表"
+      ],
+      "expected": [
+        "回傳 code=E998、message=Authentication error",
+        "TB_LON_SUMMARY_INFO 沒有新增列",
+        "流水號表的當月流水號沒有被墊高",
+        "前端隱藏選單不算通過，必須由 API 自行拒絕"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "權限繞過會讓未授權角色建立案件並墊高案號序號，屬權限缺口；繞過前端直呼 API 是常見的實際攻擊與測試路徑。"
+      },
+      "from": "SIT-BIBLE-010"
+    },
+    {
+      "id": "STT-TC-010",
+      "ac": [
+        "STT-AC-005"
+      ],
+      "title": "未帶 token 呼叫建案 API 應被拒絕",
+      "type": "auth",
+      "setup": [
+        "備妥同上的一組合法建案參數"
+      ],
+      "steps": [
+        "呼叫建案 API 但不帶 authorization header",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 是否新增"
+      ],
+      "expected": [
+        "回傳 code=E998、message=Authentication error",
+        "TB_LON_SUMMARY_INFO 沒有新增列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "無 token 即可建案等於完全沒有存取控制；缺 header 是最基本且必測的呼叫方式。"
+      }
+    },
+    {
+      "id": "STT-TC-011",
+      "ac": [
+        "STT-AC-005"
+      ],
+      "title": "以已登出失效的 token 呼叫建案 API 應被拒絕",
+      "type": "auth",
+      "setup": [
+        "以 AO（002）登入取得 token 後執行登出，保留該組 token"
+      ],
+      "steps": [
+        "以已失效的 token 呼叫建案 API 並帶入合法參數",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 是否新增"
+      ],
+      "expected": [
+        "回傳 code=E998、message=Authentication error",
+        "TB_LON_SUMMARY_INFO 沒有新增列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "失效 token 若仍可用等於登出無效，後果嚴重；但需先取得再登出，屬較少見的實際情境。"
+      }
+    },
+    {
+      "id": "STT-TC-012",
+      "ac": [
+        "STT-AC-006"
+      ],
+      "title": "lonAttribute 傳空字串應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：secureAttribute=S、productCode=02、lonTypeCode=01、refApplicationNo 空"
+      ],
+      "steps": [
+        "以 lonAttribute=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 與流水號表"
+      ],
+      "expected": [
+        "回傳 code=E102、message=lonAttribute must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列",
+        "當月流水號沒有被墊高"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "缺個金企金別會讓案件無法歸屬到正確的頁面族群與資料表；此欄位是每一次建案都必帶的參數。"
+      },
+      "from": "TC-004"
+    },
+    {
+      "id": "STT-TC-013",
+      "ac": [
+        "STT-AC-006"
+      ],
+      "title": "lonAttribute 傳入 I／C 以外的值",
+      "type": "boundary",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "其他建案參數填妥"
+      ],
+      "steps": [
+        "以 lonAttribute=\"X\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 是否新增"
+      ],
+      "expected": [
+        "回傳非 0000 的錯誤碼並指出 lonAttribute 值不合法",
+        "TB_LON_SUMMARY_INFO 沒有新增列，不得以 X 建立案件"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "非法值若被接受會產生後續流程無法處理的孤兒案件；但畫面只提供 I／C，須繞過前端才會發生。"
+      }
+    },
+    {
+      "id": "STT-TC-014",
+      "ac": [
+        "STT-AC-007"
+      ],
+      "title": "secureAttribute 傳空字串應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=I、productCode=02、lonTypeCode=01"
+      ],
+      "steps": [
+        "以 secureAttribute=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 與流水號表"
+      ],
+      "expected": [
+        "回傳 code=E102、message=secureAttribute must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列",
+        "當月流水號沒有被墊高"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "缺有擔無擔別會讓檢核資料寫錯資料表；此欄位每次建案都必帶。"
+      },
+      "from": "TC-004"
+    },
+    {
+      "id": "STT-TC-015",
+      "ac": [
+        "STT-AC-007"
+      ],
+      "title": "secureAttribute 傳入 S／U 以外的值",
+      "type": "boundary",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "其他建案參數填妥"
+      ],
+      "steps": [
+        "以 secureAttribute=\"X\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查四張檢核資料表是否有新增"
+      ],
+      "expected": [
+        "回傳非 0000 的錯誤碼並指出 secureAttribute 值不合法",
+        "四張檢核資料表都沒有新增列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "非法值會讓檢核資料無表可寫或寫錯表；畫面只提供 S／U，須繞過前端才會發生。"
+      }
+    },
+    {
+      "id": "STT-TC-016",
+      "ac": [
+        "STT-AC-008"
+      ],
+      "title": "productCode 傳空字串應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=I、secureAttribute=S、lonTypeCode=01"
+      ],
+      "steps": [
+        "以 productCode=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO"
+      ],
+      "expected": [
+        "回傳 code=E102、message=productCode must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "產品別缺漏會讓案件無法對應到正確的授信條件；此欄位每次建案都必帶。"
+      },
+      "from": "TC-004"
+    },
+    {
+      "id": "STT-TC-017",
+      "ac": [
+        "STT-AC-009"
+      ],
+      "title": "房貸組合缺 mtgProductCode 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=I、secureAttribute=S、productCode=01、lonTypeCode=01"
+      ],
+      "steps": [
+        "以 mtgProductCode=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO"
+      ],
+      "expected": [
+        "回傳 code=E102、message=mtgProductCode must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "房貸子產品缺漏會讓案件少掉決定條件的關鍵屬性；I+S+01 是房貸的主要組合，使用頻繁。"
+      },
+      "from": "TC-003"
+    },
+    {
+      "id": "STT-TC-018",
+      "ac": [
+        "STT-AC-010"
+      ],
+      "title": "非房貸組合不帶 mtgProductCode 仍可建案",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=I、secureAttribute=S、productCode=02、lonTypeCode=01、refApplicationNo 空"
+      ],
+      "steps": [
+        "以 mtgProductCode=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 data.applicationNo",
+        "以該案號查 TB_LON_SUMMARY_INFO 的 MTG_PRODUCT_CODE"
+      ],
+      "expected": [
+        "回傳 code=0000 並帶回新的 applicationNo",
+        "TB_LON_SUMMARY_INFO 該筆的 MTG_PRODUCT_CODE 為空值"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "若非房貸組合也被強制要求該欄位，等於整類產品都不能起案；非房貸產品佔日常起案的多數。"
+      }
+    },
+    {
+      "id": "STT-TC-019",
+      "ac": [
+        "STT-AC-011"
+      ],
+      "title": "lonTypeCode 傳空字串應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=I、secureAttribute=S、productCode=02"
+      ],
+      "steps": [
+        "以 lonTypeCode=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 與流水號表"
+      ],
+      "expected": [
+        "回傳 code=E102、message=lonTypeCode must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列",
+        "當月流水號沒有被墊高"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "案件類型缺漏會讓案號組成缺一段、也無法決定是否需要複製舊案；此欄位每次建案都必帶。"
+      },
+      "from": "TC-004"
+    },
+    {
+      "id": "STT-TC-020",
+      "ac": [
+        "STT-AC-011"
+      ],
+      "title": "lonTypeCode 傳入未定義的代碼",
+      "type": "boundary",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "其他建案參數填妥"
+      ],
+      "steps": [
+        "以 lonTypeCode=\"99\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查流水號表是否出現 lonTypeCode=99 的紀錄"
+      ],
+      "expected": [
+        "回傳非 0000 的錯誤碼並指出 lonTypeCode 值不合法",
+        "流水號表不得新增 lonTypeCode=99 的紀錄"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "未定義代碼會在流水號表留下永久的髒資料；畫面只提供既定選項，須繞過前端才會發生。"
+      }
+    },
+    {
+      "id": "STT-TC-021",
+      "ac": [
+        "STT-AC-012"
+      ],
+      "title": "Additional（02）未帶 refApplicationNo 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=I、secureAttribute=S、productCode=02、lonTypeCode=02"
+      ],
+      "steps": [
+        "以 refApplicationNo=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 與借款人相關資料表"
+      ],
+      "expected": [
+        "回傳 code=E102、message 指出 refApplicationNo must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列",
+        "沒有任何複製而來的借款人資料"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "增貸案缺參考案件會建出沒有舊案資料的空殼案件；增貸是三種需要參考案件的類型中最常用的。"
+      },
+      "from": "TC-005"
+    },
+    {
+      "id": "STT-TC-022",
+      "ac": [
+        "STT-AC-012"
+      ],
+      "title": "Renew（03）未帶 refApplicationNo 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=I、secureAttribute=S、productCode=05、lonTypeCode=03"
+      ],
+      "steps": [
+        "以 refApplicationNo=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO"
+      ],
+      "expected": [
+        "回傳 code=E102、message 指出 refApplicationNo must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "展期案沒有原案就失去展期的意義，會產生無法核對的案件；展期是日常業務的固定類型。"
+      }
+    },
+    {
+      "id": "STT-TC-023",
+      "ac": [
+        "STT-AC-012"
+      ],
+      "title": "Change Condition（04）未帶 refApplicationNo 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥建案參數：lonAttribute=C、secureAttribute=S、productCode=01、lonTypeCode=04"
+      ],
+      "steps": [
+        "以 refApplicationNo=\"\" 呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO"
+      ],
+      "expected": [
+        "回傳 code=E102、message 指出 refApplicationNo must not be blank",
+        "TB_LON_SUMMARY_INFO 沒有新增列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "變更案沒有原案就無從比對變更前後條件；變更是日常業務的固定類型。"
+      }
+    },
+    {
+      "id": "STT-TC-024",
+      "ac": [
+        "STT-AC-014"
+      ],
+      "title": "同時缺多個必填欄位時訊息要指出實際缺漏的欄位",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token"
+      ],
+      "steps": [
+        "以 lonAttribute=\"\"、productCode=\"\"、其餘欄位填妥呼叫建案 API",
+        "記錄回傳的 message 內容",
+        "確認訊息中提到的欄位名稱與實際傳空的欄位是否一致"
+      ],
+      "expected": [
+        "回傳 code=E102",
+        "message 指出的欄位名稱屬於實際傳空的 lonAttribute 或 productCode，不得指到有填值的欄位",
+        "不得只回泛用的檢核失敗訊息而不指出欄位"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "訊息指錯欄位不會產生錯誤資料，但會讓使用者反覆試錯；多欄同時漏填在實際操作中很常發生。"
+      }
+    },
+    {
+      "id": "STT-TC-025",
+      "ac": [
+        "STT-AC-015"
+      ],
+      "title": "變更 Customer Type 後產品選項換成企金清單",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured 且 Sub-Product Type(1) 已載入"
+      ],
+      "steps": [
+        "把 Customer Type 改成 Corporate",
+        "展開 Sub-Product Type(1) 並記錄選項內容"
+      ],
+      "expected": [
+        "選項內容為 Corporate + Secured 對應的產品清單",
+        "個金專屬的產品項目不再出現在清單中"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "殘留個金產品會讓企金案件帶著個金產品建立，後續授信條件全錯；切換客戶別是建案的第一個動作。"
+      }
+    },
+    {
+      "id": "STT-TC-026",
+      "ac": [
+        "STT-AC-016"
+      ],
+      "title": "房貸組合顯示 Sub-Product Type(2)",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁"
+      ],
+      "steps": [
+        "依序選擇 Customer Type=Individual、Product Type=Secured",
+        "Sub-Product Type(1) 選擇 Mortgage Loan(01)",
+        "檢視畫面是否出現 Sub-Product Type(2) 欄位與其預設值"
+      ],
+      "expected": [
+        "Sub-Product Type(2) 欄位出現",
+        "欄位名稱前有必填星號",
+        "下拉預設顯示 Please select"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "欄位不出現等於房貸案件缺少必要屬性且使用者無從補；房貸是主力產品。"
+      },
+      "from": "TC-003"
+    },
+    {
+      "id": "STT-TC-027",
+      "ac": [
+        "STT-AC-016"
+      ],
+      "title": "改選非房貸產品後 Sub-Product Type(2) 應隱藏",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + Mortgage Loan(01)，Sub-Product Type(2) 顯示中並已選了一個值"
+      ],
+      "steps": [
+        "把 Sub-Product Type(1) 改成 Cooperated Borey Housing Loan(02)",
+        "檢視 Sub-Product Type(2) 欄位是否仍顯示",
+        "送出建案並檢視送出的 mtgProductCode"
+      ],
+      "expected": [
+        "Sub-Product Type(2) 欄位隱藏",
+        "送出的 mtgProductCode 為空，不得把隱藏前選到的值一併送出"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "把隱藏欄位的殘值送出會讓非房貸案件帶著房貸子產品，屬資料汙染；切換產品別是常見動作。"
+      }
+    },
+    {
+      "id": "STT-TC-028",
+      "ac": [
+        "STT-AC-017"
+      ],
+      "title": "房貸組合未選 Sub-Product Type(2) 時前端擋下",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + Mortgage Loan(01) + Loan Type=New(01)，Sub-Product Type(2) 維持 Please select"
+      ],
+      "steps": [
+        "按下建案按鈕",
+        "檢視 Sub-Product Type(2) 欄位後的提示文字",
+        "檢查瀏覽器是否送出建案 API 請求"
+      ],
+      "expected": [
+        "Sub-Product Type(2) 欄位後顯示 Please select，message key 為 COMMON_UI_PLEASE_SELECT",
+        "沒有送出建案 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "前端漏擋時後端仍會以 E102 擋下，不會產生錯誤資料；但漏填是使用者最常犯的操作。"
+      }
+    },
+    {
+      "id": "STT-TC-029",
+      "ac": [
+        "STT-AC-018"
+      ],
+      "title": "企金無擔時產品別預設選第二筆",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "企金無擔的產品清單至少有兩筆資料"
+      ],
+      "steps": [
+        "選擇 Customer Type=Corporate",
+        "選擇 Product Type=Unsecured",
+        "檢視 Sub-Product Type(1) 目前選中的項目"
+      ],
+      "expected": [
+        "Sub-Product Type(1) 選中清單的第二筆資料",
+        "不停留在 Please select"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "預設值錯誤只是多一次點選，送出前仍有必填檢核；企金無擔是常用組合，每次都會遇到。"
+      }
+    },
+    {
+      "id": "STT-TC-030",
+      "ac": [
+        "STT-AC-019"
+      ],
+      "title": "其他組合的產品別預設停在 Please select",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁"
+      ],
+      "steps": [
+        "選擇 Customer Type=Individual、Product Type=Secured",
+        "檢視 Sub-Product Type(1) 目前選中的項目"
+      ],
+      "expected": [
+        "Sub-Product Type(1) 顯示 Please select 且維持未選狀態",
+        "不自動選中任何一筆產品"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "誤自動選值會讓使用者在沒察覺下用錯產品建案，但必填檢核與後端仍會驗；個金有擔是最常用的組合。"
+      }
+    },
+    {
+      "id": "STT-TC-031",
+      "ac": [
+        "STT-AC-020"
+      ],
+      "title": "Cooperated Borey Housing Loan(02) 的 Loan Type 只有三個選項",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁"
+      ],
+      "steps": [
+        "選擇 Customer Type=Individual、Product Type=Secured",
+        "Sub-Product Type(1) 選擇 Cooperated Borey Housing Loan(02)",
+        "展開 Loan Type 下拉並逐項記錄"
+      ],
+      "expected": [
+        "Please select 之後只有 New(01)、Additional(02)、Change Condition(04) 三項",
+        "不出現 Renew(03)"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "多給 Renew 會讓不該展期的產品被建成展期案，後續核決流程走錯；這個產品在個金有擔中使用頻繁。"
+      },
+      "from": "TC-002"
+    },
+    {
+      "id": "STT-TC-032",
+      "ac": [
+        "STT-AC-020"
+      ],
+      "title": "以 API 直接送 Renew(03) 給只允許三個選項的產品",
+      "type": "boundary",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥參數：lonAttribute=I、secureAttribute=S、productCode=02、lonTypeCode=03、refApplicationNo 帶一件合法舊案"
+      ],
+      "steps": [
+        "繞過畫面直接呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 是否新增 LON_TYPE_CODE=03 的案件"
+      ],
+      "expected": [
+        "後端拒絕該組合並回傳可辨識的錯誤，不得回 0000",
+        "TB_LON_SUMMARY_INFO 沒有新增 productCode=02 且 LON_TYPE_CODE=03 的案件"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "產品與案件類型的非法組合會讓案件進入不存在的業務流程；須繞過前端才會發生。"
+      }
+    },
+    {
+      "id": "STT-TC-033",
+      "ac": [
+        "STT-AC-022"
+      ],
+      "title": "一般產品的 Loan Type 有四個選項",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁"
+      ],
+      "steps": [
+        "選擇 Customer Type=Individual、Product Type=Secured",
+        "Sub-Product Type(1) 選擇 Mortgage Loan(01)",
+        "展開 Loan Type 下拉並逐項記錄"
+      ],
+      "expected": [
+        "Please select 之後有 New(01)、Additional(02)、Renew(03)、Change Condition(04) 四項"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "少給選項會讓某些案件類型完全無法建立；這是預設分支，涵蓋大多數產品。"
+      }
+    },
+    {
+      "id": "STT-TC-034",
+      "ac": [
+        "STT-AC-023"
+      ],
+      "title": "Loan Type 選 Additional 顯示 Matching Engine",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + Mortgage Loan(01) + Sub-Product Type(2) 任一值"
+      ],
+      "steps": [
+        "Loan Type 選擇 Additional(02)",
+        "檢視畫面是否出現 Matching Engine 區塊"
+      ],
+      "expected": [
+        "Matching Engine 區塊出現，含 Name of Applicant、Application No 與 Search 鈕"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "區塊不出現等於無法選參考案件、增貸案完全建不起來；增貸使用頻繁。"
+      }
+    },
+    {
+      "id": "STT-TC-035",
+      "ac": [
+        "STT-AC-023"
+      ],
+      "title": "Loan Type 選 Renew 顯示 Matching Engine",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + Mortgage Loan(01) + Sub-Product Type(2) 任一值"
+      ],
+      "steps": [
+        "Loan Type 選擇 Renew(03)",
+        "檢視畫面是否出現 Matching Engine 區塊"
+      ],
+      "expected": [
+        "Matching Engine 區塊出現"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "區塊不出現等於展期案建不起來；展期是固定的業務類型。"
+      }
+    },
+    {
+      "id": "STT-TC-036",
+      "ac": [
+        "STT-AC-023"
+      ],
+      "title": "Loan Type 選 Change Condition 顯示 Matching Engine",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + Mortgage Loan(01) + Sub-Product Type(2) 任一值"
+      ],
+      "steps": [
+        "Loan Type 選擇 Change Condition(04)",
+        "檢視畫面是否出現 Matching Engine 區塊"
+      ],
+      "expected": [
+        "Matching Engine 區塊出現"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "區塊不出現等於變更案建不起來；變更是固定的業務類型。"
+      }
+    },
+    {
+      "id": "STT-TC-037",
+      "ac": [
+        "STT-AC-024"
+      ],
+      "title": "改回 New 後 Matching Engine 應隱藏且不帶參考案件",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Loan Type=Additional 並在 Matching Engine 搜尋後勾選了一筆參考案件"
+      ],
+      "steps": [
+        "把 Loan Type 改成 New(01)",
+        "檢視 Matching Engine 區塊是否仍顯示",
+        "送出建案並檢視送出的 refApplicationNo"
+      ],
+      "expected": [
+        "Matching Engine 區塊隱藏",
+        "送出的 refApplicationNo 為空，不得沿用隱藏前勾選的案號"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "新案帶著參考案號會觸發不該執行的舊案複製，產生錯誤的案件資料；使用者改變主意重選類型很常見。"
+      }
+    },
+    {
+      "id": "STT-TC-038",
+      "ac": [
+        "STT-AC-025"
+      ],
+      "title": "未選 Customer Type 時前端擋下並提示",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁，所有欄位維持預設未選"
+      ],
+      "steps": [
+        "按下建案按鈕",
+        "檢視 Customer Type 欄位後的提示文字",
+        "檢查是否送出建案 API 請求"
+      ],
+      "expected": [
+        "Customer Type 欄位後顯示 Please select，message key 為 COMMON_UI_PLEASE_SELECT",
+        "沒有送出建案 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端仍以 E102 擋下不會產生錯誤資料；空白送出是最常見的誤操作。"
+      },
+      "from": "TC-004"
+    },
+    {
+      "id": "STT-TC-039",
+      "ac": [
+        "STT-AC-025"
+      ],
+      "title": "未選 Product Type 時前端擋下並提示",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "只選了 Customer Type=Individual"
+      ],
+      "steps": [
+        "按下建案按鈕",
+        "檢視 Product Type 欄位後的提示文字",
+        "檢查是否送出建案 API 請求"
+      ],
+      "expected": [
+        "Product Type 欄位後顯示 Please select，message key 為 COMMON_UI_PLEASE_SELECT",
+        "沒有送出建案 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端仍會擋下；漏選擔保別是常見誤操作。"
+      }
+    },
+    {
+      "id": "STT-TC-040",
+      "ac": [
+        "STT-AC-025"
+      ],
+      "title": "未選 Sub-Product Type(1) 時前端擋下並提示",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured，Sub-Product Type(1) 維持 Please select"
+      ],
+      "steps": [
+        "按下建案按鈕",
+        "檢視 Sub-Product Type(1) 欄位後的提示文字",
+        "檢查是否送出建案 API 請求"
+      ],
+      "expected": [
+        "Sub-Product Type(1) 欄位後顯示 Please select，message key 為 COMMON_UI_PLEASE_SELECT",
+        "沒有送出建案 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端仍會擋下；漏選產品別是常見誤操作。"
+      }
+    },
+    {
+      "id": "STT-TC-041",
+      "ac": [
+        "STT-AC-025"
+      ],
+      "title": "未選 Loan Type 時前端擋下並提示",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + 任一產品，Loan Type 維持 Please select"
+      ],
+      "steps": [
+        "按下建案按鈕",
+        "檢視 Loan Type 欄位後的提示文字",
+        "檢查是否送出建案 API 請求"
+      ],
+      "expected": [
+        "Loan Type 欄位後顯示 Please select，message key 為 COMMON_UI_PLEASE_SELECT",
+        "沒有送出建案 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端仍會擋下；漏選案件類型是常見誤操作。"
+      }
+    },
+    {
+      "id": "STT-TC-042",
+      "ac": [
+        "STT-AC-026"
+      ],
+      "title": "個金 Additional 顯示 Doc No. 欄位",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁"
+      ],
+      "steps": [
+        "選擇 Customer Type=Individual 與 Loan Type=Additional(02) 使 Matching Engine 顯示",
+        "逐一檢視 Matching Engine 內出現的查詢欄位"
+      ],
+      "expected": [
+        "出現 Name of Applicant、Application No 與 Doc No. 三個查詢欄位",
+        "不出現 Date of Birth 與 Register No."
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "欄位錯置會讓 AO 查不到該查的案件而改用錯誤條件；個金增貸是高頻情境。"
+      },
+      "from": "TC-007"
+    },
+    {
+      "id": "STT-TC-043",
+      "ac": [
+        "STT-AC-026"
+      ],
+      "title": "個金 Renew／Change Condition 顯示 Date of Birth 欄位",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁"
+      ],
+      "steps": [
+        "選擇 Customer Type=Individual 與 Loan Type=Renew(03) 使 Matching Engine 顯示",
+        "逐一檢視 Matching Engine 內出現的查詢欄位",
+        "把 Loan Type 改成 Change Condition(04) 再檢視一次"
+      ],
+      "expected": [
+        "兩種情境都出現 Name of Applicant、Application No 與 Date of Birth，且 Date of Birth 為日期選擇器",
+        "不出現 Doc No. 與 Register No."
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "查詢條件錯誤會讓展變案找不到原案而無法起案；個金展變是固定業務。"
+      },
+      "from": "TC-009"
+    },
+    {
+      "id": "STT-TC-044",
+      "ac": [
+        "STT-AC-026"
+      ],
+      "title": "企金三種類型都顯示 Register No. 欄位",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁"
+      ],
+      "steps": [
+        "選擇 Customer Type=Corporate 與 Loan Type=Additional(02)，檢視查詢欄位",
+        "改選 Renew(03) 與 Change Condition(04) 各檢視一次"
+      ],
+      "expected": [
+        "三種類型都出現 Name of Applicant、Application No 與 Register No.",
+        "不出現 Doc No. 與 Date of Birth"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "企金以公司註冊碼為主要識別，欄位缺漏等於查不到公司案件；企金展變佔比不低。"
+      },
+      "from": "TC-008"
+    },
+    {
+      "id": "STT-TC-045",
+      "ac": [
+        "STT-AC-027"
+      ],
+      "title": "個金 Additional 查詢條件全空時擋下",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Additional 使 Matching Engine 顯示，三個查詢欄位皆為空"
+      ],
+      "steps": [
+        "按下 Search 鈕",
+        "檢視 Name of Applicant、Application No、Doc No. 後的提示文字",
+        "檢查是否送出清單查詢 API 請求"
+      ],
+      "expected": [
+        "三個欄位後皆顯示 Please enter the value，message key 為 COMMON_VALIDATE_001",
+        "沒有送出清單查詢 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端亦會以 E102 擋下，不致查出全表資料；直接按 Search 是常見誤操作。"
+      }
+    },
+    {
+      "id": "STT-TC-046",
+      "ac": [
+        "STT-AC-027"
+      ],
+      "title": "個金 Renew 查詢條件全空時擋下",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Renew 使 Matching Engine 顯示，三個查詢欄位皆為空"
+      ],
+      "steps": [
+        "按下 Search 鈕",
+        "檢視三個查詢欄位後的提示文字",
+        "檢查是否送出清單查詢 API 請求"
+      ],
+      "expected": [
+        "Name of Applicant、Application No、Date of Birth 後皆顯示 Please enter the value",
+        "沒有送出清單查詢 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端亦會擋下；空條件查詢是常見誤操作。"
+      }
+    },
+    {
+      "id": "STT-TC-047",
+      "ac": [
+        "STT-AC-027"
+      ],
+      "title": "企金查詢條件全空時擋下",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Corporate + Additional 使 Matching Engine 顯示，三個查詢欄位皆為空"
+      ],
+      "steps": [
+        "按下 Search 鈕",
+        "檢視三個查詢欄位後的提示文字",
+        "檢查是否送出清單查詢 API 請求"
+      ],
+      "expected": [
+        "Name of Applicant、Application No、Register No. 後皆顯示 Please enter the value",
+        "沒有送出清單查詢 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端亦會擋下；空條件查詢是常見誤操作。"
+      }
+    },
+    {
+      "id": "STT-TC-048",
+      "ac": [
+        "STT-AC-028"
+      ],
+      "title": "個金 Additional 只填 Application No 時要求補 Doc No.",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Additional，只在 Application No 填入一個既有案號"
+      ],
+      "steps": [
+        "按下 Search 鈕",
+        "檢視 Doc No. 欄位後的提示文字",
+        "檢查是否送出清單查詢 API 請求"
+      ],
+      "expected": [
+        "Doc No. 欄位後顯示 Please enter the value，message key 為 COMMON_VALIDATE_001",
+        "沒有送出清單查詢 API 請求"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "只憑案號即可跨部門撈到他人案件屬資料外洩風險；直接貼案號查詢是 AO 的自然操作。"
+      }
+    },
+    {
+      "id": "STT-TC-049",
+      "ac": [
+        "STT-AC-028"
+      ],
+      "title": "個金 Renew 只填 Application No 時要求補姓名與生日",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Renew，只在 Application No 填入一個既有案號"
+      ],
+      "steps": [
+        "按下 Search 鈕",
+        "檢視 Name of Applicant 與 Date of Birth 欄位後的提示文字",
+        "把姓名填入後再按一次 Search，檢視 Date of Birth 的提示"
+      ],
+      "expected": [
+        "第一次按下後 Name of Applicant 欄位後顯示 Please enter the value",
+        "只補姓名後 Date of Birth 欄位後仍顯示 Please enter the value",
+        "兩次皆未送出清單查詢 API 請求"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "跨部門查詢缺少身分比對會外洩他部門案件；只貼案號查詢是常見操作。"
+      }
+    },
+    {
+      "id": "STT-TC-050",
+      "ac": [
+        "STT-AC-028"
+      ],
+      "title": "企金只填 Application No 時要求補 Register No.",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Corporate + Additional，只在 Application No 填入一個既有案號"
+      ],
+      "steps": [
+        "按下 Search 鈕",
+        "檢視 Register No. 欄位後的提示文字",
+        "檢查是否送出清單查詢 API 請求"
+      ],
+      "expected": [
+        "Register No. 欄位後顯示 Please enter the value",
+        "沒有送出清單查詢 API 請求"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "缺少公司識別即可跨部門查詢屬資料外洩風險；只貼案號查詢是常見操作。"
+      }
+    },
+    {
+      "id": "STT-TC-051",
+      "ac": [
+        "STT-AC-029"
+      ],
+      "title": "姓名模糊查詢可查到同部門的多筆案件",
+      "type": "happy",
+      "setup": [
+        "以部門代碼 012 的 AO（002）登入",
+        "資料庫中 BELONG_DEP_CODE=012 且主借款人姓名含 MARK 的案件至少兩筆"
+      ],
+      "steps": [
+        "在 Matching Engine 的 Name of Applicant 填入 MAR",
+        "按下 Search 鈕",
+        "逐列檢視查詢結果的 Name of Applicant"
+      ],
+      "expected": [
+        "查詢結果包含姓名含 MARK 的多筆案件，證明是模糊比對而非完全相符",
+        "畫面右下角顯示 QUERY SUCCESS（message key MSG_QUERY_SUCCESS）"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "查不到既有案件就無法建立增貸或展變案；姓名查詢是最常用的搜尋方式。"
+      },
+      "from": "TC-007"
+    },
+    {
+      "id": "STT-TC-052",
+      "ac": [
+        "STT-AC-029"
+      ],
+      "title": "姓名查詢不得撈到其他部門的案件",
+      "type": "auth",
+      "setup": [
+        "以部門代碼 012 的 AO（002）登入",
+        "資料庫中 BELONG_DEP_CODE=012 與 BELONG_DEP_CODE=013 各有一筆主借款人姓名同為 MARK 的案件"
+      ],
+      "steps": [
+        "在 Name of Applicant 填入 MARK 並按下 Search",
+        "逐列比對查詢結果的 Application No 與兩筆測試資料"
+      ],
+      "expected": [
+        "結果只含 BELONG_DEP_CODE=012 的那筆案件",
+        "BELONG_DEP_CODE=013 的案件不出現在結果中"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "跨部門看到他人案件屬資料外洩；姓名查詢每天都在用，一旦沒過濾就是持續外洩。"
+      }
+    },
+    {
+      "id": "STT-TC-053",
+      "ac": [
+        "STT-AC-030"
+      ],
+      "title": "案號搭配身分條件可跨部門查到案件",
+      "type": "happy",
+      "setup": [
+        "以部門代碼 012 的 AO（002）登入",
+        "備妥一筆 BELONG_DEP_CODE=013 的個金案件，記下其 Application No、主借款人姓名與生日"
+      ],
+      "steps": [
+        "選擇 Individual + Renew 使 Date of Birth 欄位顯示",
+        "填入該案件的 Application No、Name of Applicant 與 Date of Birth",
+        "按下 Search 鈕並檢視結果"
+      ],
+      "expected": [
+        "該筆他部門案件出現在查詢結果中",
+        "結果列的 Application No 與測試資料相同"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "查不到會讓跨部門起案完全走不通，影響明確；但跨部門起案相對於同部門查詢較少發生。"
+      }
+    },
+    {
+      "id": "STT-TC-054",
+      "ac": [
+        "STT-AC-031"
+      ],
+      "title": "清單查詢缺 page 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥清單查詢參數：size=5、deptCode=012、loanAttribute=I、secureAttribute=S、langType=en_US、applicantName=MARK"
+      ],
+      "steps": [
+        "以 page 為空呼叫清單查詢 API",
+        "記錄回傳的 code 與 message"
+      ],
+      "expected": [
+        "回傳 code=E102、message=page must not be blank",
+        "回傳的 data 不含任何案件清單資料"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "缺分頁參數只影響查詢本身不會寫壞資料；前端每次查詢都會帶此欄位，屬必經路徑。"
+      }
+    },
+    {
+      "id": "STT-TC-055",
+      "ac": [
+        "STT-AC-031"
+      ],
+      "title": "清單查詢缺 size 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥清單查詢參數，page=1、其餘必填填妥"
+      ],
+      "steps": [
+        "以 size 為空呼叫清單查詢 API",
+        "記錄回傳的 code 與 message"
+      ],
+      "expected": [
+        "回傳 code=E102、message=size must not be blank"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "缺筆數只影響查詢本身；此欄位每次查詢都會帶。"
+      }
+    },
+    {
+      "id": "STT-TC-056",
+      "ac": [
+        "STT-AC-031"
+      ],
+      "title": "清單查詢缺 deptCode 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥清單查詢參數，其餘必填填妥"
+      ],
+      "steps": [
+        "以 deptCode 為空呼叫清單查詢 API",
+        "記錄回傳的 code 與 message",
+        "確認回傳結果是否含任何案件"
+      ],
+      "expected": [
+        "回傳 code=E102、message=deptCode must not be blank",
+        "不得因缺少部門條件而回傳跨部門的案件清單"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "部門是查詢範圍的關鍵限制，缺漏若被放行會變成全行查詢；此欄位每次查詢都會帶。"
+      }
+    },
+    {
+      "id": "STT-TC-057",
+      "ac": [
+        "STT-AC-031"
+      ],
+      "title": "清單查詢缺 loanAttribute 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥清單查詢參數，其餘必填填妥"
+      ],
+      "steps": [
+        "以 loanAttribute 為空呼叫清單查詢 API",
+        "記錄回傳的 code 與 message"
+      ],
+      "expected": [
+        "回傳 code=E102、message=loanAttribute must not be blank"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "缺個金企金別只會查不到資料不會寫壞案件；此欄位每次查詢都會帶。"
+      }
+    },
+    {
+      "id": "STT-TC-058",
+      "ac": [
+        "STT-AC-031"
+      ],
+      "title": "清單查詢缺 secureAttribute 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥清單查詢參數，其餘必填填妥"
+      ],
+      "steps": [
+        "以 secureAttribute 為空呼叫清單查詢 API",
+        "記錄回傳的 code 與 message"
+      ],
+      "expected": [
+        "回傳 code=E102、message=secureAttribute must not be blank"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "缺擔保別只影響查詢範圍不會寫壞資料；此欄位每次查詢都會帶。"
+      }
+    },
+    {
+      "id": "STT-TC-059",
+      "ac": [
+        "STT-AC-031"
+      ],
+      "title": "清單查詢缺 langType 應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥清單查詢參數，其餘必填填妥"
+      ],
+      "steps": [
+        "以 langType 為空呼叫清單查詢 API",
+        "記錄回傳的 code 與 message"
+      ],
+      "expected": [
+        "回傳 code=E102、message=langType must not be blank"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "缺語系只影響顯示名稱不會寫壞資料；此欄位每次查詢都會帶。"
+      }
+    },
+    {
+      "id": "STT-TC-060",
+      "ac": [
+        "STT-AC-032"
+      ],
+      "title": "清單查詢五項搜尋條件全空應回 E102",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "page=1、size=5、deptCode=012、loanAttribute=I、secureAttribute=S、langType=en_US 皆填妥"
+      ],
+      "steps": [
+        "把 applicantName、applicationNo、docNo、dateOfBirth、registerNo 全部設為空字串後呼叫清單查詢 API",
+        "記錄回傳的 code 與 message",
+        "確認回傳的 totalCount"
+      ],
+      "expected": [
+        "回傳 code=E102，message 為 applicantName or applicationNo or docNo or dateOfBirth or registerNo must not be blank",
+        "不得回傳無條件的全部案件清單"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "無條件查詢會一次撈出全部案件，同時是效能與資料外洩風險；只按 Search 不填條件是常見操作。"
+      }
+    },
+    {
+      "id": "STT-TC-061",
+      "ac": [
+        "STT-AC-034"
+      ],
+      "title": "增貸案未搜尋就送出應提示先查詢",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + 任一產品 + Loan Type=Additional，Matching Engine 顯示中且尚未按過 Search"
+      ],
+      "steps": [
+        "直接按下建案按鈕",
+        "檢視 Search 鈕後的提示文字",
+        "檢查是否送出建案 API 請求"
+      ],
+      "expected": [
+        "Search 鈕後顯示 Please search，message key 為 COMMON_UI_PLEASE_SEARCH",
+        "沒有送出建案 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端會以 refApplicationNo 必填擋下，不會建出案件；跳過搜尋直接送出是常見誤操作。"
+      }
+    },
+    {
+      "id": "STT-TC-062",
+      "ac": [
+        "STT-AC-035"
+      ],
+      "title": "搜尋有結果但未勾選就送出應提示先選取",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Loan Type=Additional 並成功搜尋出至少一筆結果，未勾選任何一列"
+      ],
+      "steps": [
+        "按下建案按鈕",
+        "檢視建案按鈕後的提示文字",
+        "檢查是否送出建案 API 請求"
+      ],
+      "expected": [
+        "建案按鈕後顯示 Please select，message key 為 COMMON_UI_PLEASE_SELECT",
+        "沒有送出建案 API 請求"
+      ],
+      "risk": {
+        "impact": "Low",
+        "likelihood": "High",
+        "level": "Medium",
+        "why": "後端仍會擋下；查到結果後忘記勾選是常見誤操作。"
+      },
+      "from": "TC-005"
+    },
+    {
+      "id": "STT-TC-063",
+      "ac": [
+        "STT-AC-037"
+      ],
+      "title": "本月已有流水號時直接遞增取號",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "確認流水號表已存在本月、APP_TYPE=IS、lonTypeCode=01 的紀錄，記下目前流水號值 N"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=S、productCode=02、lonTypeCode=01 呼叫建案 API",
+        "記錄回傳的 applicationNo",
+        "查流水號表該筆紀錄目前的流水號值，並清點該組合的紀錄筆數"
+      ],
+      "expected": [
+        "流水號值為 N+1",
+        "回傳案號的末四碼等於 N+1 並補零至四位",
+        "該組合的流水號紀錄仍只有一筆，沒有被新增第二筆"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "流水號未遞增會直接造成重複案號；當月第二件以後的案件都走這條路徑。"
+      }
+    },
+    {
+      "id": "STT-TC-064",
+      "ac": [
+        "STT-AC-038"
+      ],
+      "title": "本月尚無流水號時先新增再取號",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "刪除或改用一組本月尚無流水號紀錄的組合，例如 APP_TYPE=CU、lonTypeCode=04"
+      ],
+      "steps": [
+        "以對應的 lonAttribute、secureAttribute、lonTypeCode 呼叫建案 API",
+        "記錄回傳的 applicationNo",
+        "查流水號表是否出現該組合的新紀錄與其流水號值"
+      ],
+      "expected": [
+        "流水號表新增一筆該年月與組合的紀錄",
+        "回傳案號的末四碼為 0001",
+        "建案成功回傳 code=0000"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "首件建不起來等於每個月第一天都會卡住；每個組合每月必然會走到一次這條路徑。"
+      }
+    },
+    {
+      "id": "STT-TC-065",
+      "ac": [
+        "STT-AC-039"
+      ],
+      "title": "流水號更新影響多筆時應中止建案",
+      "type": "negative",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "在流水號表刻意插入同年月、同 APP_TYPE、同 lonTypeCode 的重複紀錄兩筆"
+      ],
+      "steps": [
+        "以該組合呼叫建案 API",
+        "記錄回傳的 code 與 message",
+        "查 TB_LON_SUMMARY_INFO 與 TB_APP_HISTORY 是否有新增"
+      ],
+      "expected": [
+        "回傳 code=E999、message=System error",
+        "TB_LON_SUMMARY_INFO 與 TB_APP_HISTORY 皆無新增列",
+        "不得以其中任一筆流水號繼續建案"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "若繼續建案會產生兩件相同案號的案件，後果無法回復；但流水號表出現重複鍵值屬異常資料狀態。"
+      }
+    },
+    {
+      "id": "STT-TC-066",
+      "ac": [
+        "STT-AC-040"
+      ],
+      "title": "同組合併發建案不得產生重複案號",
+      "type": "concurrent",
+      "setup": [
+        "以兩組 AO（002）帳號各自取得有效 token",
+        "兩邊使用相同參數：lonAttribute=I、secureAttribute=S、productCode=02、lonTypeCode=01"
+      ],
+      "steps": [
+        "同時送出兩支建案 API 請求",
+        "記錄兩支回傳的 code 與 applicationNo",
+        "查流水號表該組合的目前值，並查 TB_LON_SUMMARY_INFO 中這兩個案號的筆數"
+      ],
+      "expected": [
+        "兩支回傳的 applicationNo 不相同",
+        "TB_LON_SUMMARY_INFO 中每個案號各只有一筆",
+        "流水號表的值等於併發前的值加 2，沒有跳號",
+        "若其中一支以案號衝突失敗，必須回傳可辨識的錯誤而不是靜默建出重複案號"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "重複案號會讓兩件案子的資料互相覆蓋且無法回復；同分行多位 AO 同時起案在營業時間很常見，且重構後的鎖定策略尚未設計。"
+      },
+      "from": "TC-013"
+    },
+    {
+      "id": "STT-TC-067",
+      "ac": [
+        "STT-AC-041"
+      ],
+      "title": "建案成功寫入案件主檔的關鍵欄位",
+      "type": "happy",
+      "setup": [
+        "以部門 012、分行 00012 的 AO（002）登入取得有效 token",
+        "備妥參數：lonAttribute=I、secureAttribute=S、productCode=01、mtgProductCode=01、lonTypeCode=01"
+      ],
+      "steps": [
+        "呼叫建案 API 並記錄回傳的 applicationNo 與呼叫當下的時間",
+        "以該案號查 TB_LON_SUMMARY_INFO",
+        "逐欄比對 CASE_PROGRESS、LON_ATTRIBUTE、SECURE_ATTRIBUTE、LON_TYPE_CODE、PRODUCT_CODE、MTG_PRODUCT_CODE、APPLICATION_DATE、RECEIVED_DATE、GET_APPNO_DATE"
+      ],
+      "expected": [
+        "查得一筆且僅一筆資料",
+        "CASE_PROGRESS 為 01",
+        "LON_ATTRIBUTE=I、SECURE_ATTRIBUTE=S、LON_TYPE_CODE=01、PRODUCT_CODE=01、MTG_PRODUCT_CODE=01 與上行參數一致",
+        "APPLICATION_DATE 與 RECEIVED_DATE 落在呼叫當下的時間區間內",
+        "GET_APPNO_DATE 為六碼的起案年月"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "主檔欄位錯誤會讓案件從一開始就走錯流程且下游全部受影響；建案是本功能的核心路徑。"
+      },
+      "from": "TC-006"
+    },
+    {
+      "id": "STT-TC-068",
+      "ac": [
+        "STT-AC-041"
+      ],
+      "title": "跨月起案時取號年月須為當下年月",
+      "type": "boundary",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "把測試環境時間調到月底最後一日的 23:59 附近，或於跨月時點執行"
+      ],
+      "steps": [
+        "在跨月前後各建立一件相同組合的案件",
+        "記錄兩件的 applicationNo",
+        "查兩筆 TB_LON_SUMMARY_INFO 的 GET_APPNO_DATE"
+      ],
+      "expected": [
+        "兩件的 GET_APPNO_DATE 分別為各自建案當下的年月，不共用同一個月份",
+        "跨月後的案件流水號從該月的起始值重新計算"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "年月取錯會讓案號歸屬到錯誤月份並和上個月的流水號互相干擾；但只在每月交界的短暫時段才會發生。"
+      }
+    },
+    {
+      "id": "STT-TC-069",
+      "ac": [
+        "STT-AC-042"
+      ],
+      "title": "AO Assistant 起案寫入 AO_ASSISTANT_CODE",
+      "type": "auth",
+      "setup": [
+        "以角色 001 的帳號登入，記下員工代號"
+      ],
+      "steps": [
+        "以合法參數呼叫建案 API 並記錄回傳的 applicationNo",
+        "以該案號查 TB_LON_SUMMARY_INFO",
+        "檢視 AO_ASSISTANT_CODE、AO_CODE、CURRENT_USER_ID 三欄"
+      ],
+      "expected": [
+        "AO_ASSISTANT_CODE 等於該員工代號",
+        "AO_CODE 為空",
+        "CURRENT_USER_ID 等於該員工代號"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "承辦人欄位寫錯會讓案件歸屬到錯誤的人、影響後續派件與權責；001 是兩種起案角色之一，使用頻繁。"
+      }
+    },
+    {
+      "id": "STT-TC-070",
+      "ac": [
+        "STT-AC-043"
+      ],
+      "title": "AO 起案寫入 AO_CODE",
+      "type": "auth",
+      "setup": [
+        "以角色 002 的帳號登入，記下員工代號"
+      ],
+      "steps": [
+        "以合法參數呼叫建案 API 並記錄回傳的 applicationNo",
+        "以該案號查 TB_LON_SUMMARY_INFO",
+        "檢視 AO_ASSISTANT_CODE、AO_CODE、CURRENT_USER_ID 三欄"
+      ],
+      "expected": [
+        "AO_CODE 等於該員工代號",
+        "AO_ASSISTANT_CODE 為空",
+        "CURRENT_USER_ID 等於該員工代號"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "承辦人欄位寫錯會讓案件歸屬錯誤；002 是主要的起案角色。"
+      }
+    },
+    {
+      "id": "STT-TC-071",
+      "ac": [
+        "STT-AC-044"
+      ],
+      "title": "建案成功寫入一筆起案歷程",
+      "type": "happy",
+      "setup": [
+        "以分行 00012 的 AO（002）登入取得有效 token，記下員工代號、姓名與分行名稱"
+      ],
+      "steps": [
+        "以合法參數呼叫建案 API 並記錄 applicationNo 與呼叫當下時間",
+        "以該案號查 TB_APP_HISTORY",
+        "逐欄比對處理人員代號、姓名、分行代號、分行名稱與處理時間"
+      ],
+      "expected": [
+        "查得一筆且僅一筆歷程",
+        "處理人員代號、姓名、分行代號、分行名稱與登入資訊一致",
+        "處理時間為 TIMESTAMP 格式且落在呼叫當下的時間區間內"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "沒有起案歷程會讓案件失去稽核起點、後續無法追溯誰起的案；每一件案件都必然寫這一筆。"
+      },
+      "from": "TC-006"
+    },
+    {
+      "id": "STT-TC-072",
+      "ac": [
+        "STT-AC-047"
+      ],
+      "title": "個金有擔建案寫入 IS 檢核表",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=S 呼叫建案 API 並記錄 applicationNo",
+        "以該案號分別查 TB_CHECK_POINTS_IS、TB_CHECK_POINTS_IU、TB_CHECK_POINTS_CS、TB_CHECK_POINTS_CU"
+      ],
+      "expected": [
+        "TB_CHECK_POINTS_IS 有該案號的資料",
+        "另外三張檢核表在該案號下皆無任何列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "檢核資料寫錯表會讓案件的頁籤與必填檢核整組失效；個金有擔是最大宗的案件類型。"
+      }
+    },
+    {
+      "id": "STT-TC-073",
+      "ac": [
+        "STT-AC-047"
+      ],
+      "title": "個金無擔建案寫入 IU 檢核表",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=U 呼叫建案 API 並記錄 applicationNo",
+        "以該案號分別查四張檢核表"
+      ],
+      "expected": [
+        "TB_CHECK_POINTS_IU 有該案號的資料",
+        "另外三張檢核表在該案號下皆無任何列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "檢核資料寫錯表會讓案件頁籤與必填檢核失效；個金無擔是常態產品組合。"
+      }
+    },
+    {
+      "id": "STT-TC-074",
+      "ac": [
+        "STT-AC-047"
+      ],
+      "title": "企金有擔建案寫入 CS 檢核表",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token"
+      ],
+      "steps": [
+        "以 lonAttribute=C、secureAttribute=S 呼叫建案 API 並記錄 applicationNo",
+        "以該案號分別查四張檢核表"
+      ],
+      "expected": [
+        "TB_CHECK_POINTS_CS 有該案號的資料",
+        "另外三張檢核表在該案號下皆無任何列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "檢核資料寫錯表會讓企金案件頁籤失效；企金有擔是常態產品組合。"
+      }
+    },
+    {
+      "id": "STT-TC-075",
+      "ac": [
+        "STT-AC-047"
+      ],
+      "title": "企金無擔建案寫入 CU 檢核表",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token"
+      ],
+      "steps": [
+        "以 lonAttribute=C、secureAttribute=U 呼叫建案 API 並記錄 applicationNo",
+        "以該案號分別查四張檢核表"
+      ],
+      "expected": [
+        "TB_CHECK_POINTS_CU 有該案號的資料",
+        "另外三張檢核表在該案號下皆無任何列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "檢核資料寫錯表會讓企金無擔案件頁籤失效；企金無擔在 legacy 另有排除規則，出錯機率相對高。"
+      },
+      "from": "TC-011"
+    },
+    {
+      "id": "STT-TC-076",
+      "ac": [
+        "STT-AC-049"
+      ],
+      "title": "個金增貸複製舊案的借款人與保證人資料",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件個金有擔的參考案件，確認其主借款人、工作、家庭、共借人與保證人資料皆有值，記下案號"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=S、lonTypeCode=02、refApplicationNo 帶入該參考案號呼叫建案 API",
+        "記錄回傳的新 applicationNo",
+        "以新案號查主借款人、工作、家庭、共借人與保證人相關資料表",
+        "以新案號查企金主借款人資料表"
+      ],
+      "expected": [
+        "主借款人、工作、家庭、共借人與保證人資料表在新案號下皆有資料，且筆數與參考案件一致",
+        "企金主借款人資料表在新案號下無任何列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "複製失敗會讓 AO 必須手動重打整份客戶資料，且容易與原案不一致；個金增貸是複製流程中最常走的分支。"
+      },
+      "from": "TC-010"
+    },
+    {
+      "id": "STT-TC-077",
+      "ac": [
+        "STT-AC-049"
+      ],
+      "title": "個金展期（03）同樣觸發舊案複製",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥同一件資料完整的個金有擔參考案件"
+      ],
+      "steps": [
+        "以 lonTypeCode=03、refApplicationNo 帶入該參考案號呼叫建案 API",
+        "以回傳的新案號查主借款人與保證人相關資料表"
+      ],
+      "expected": [
+        "主借款人與保證人資料表在新案號下有由參考案件複製而來的資料"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "展期案沒帶入舊資料等於要重建整份案件；展期是固定的業務類型。"
+      }
+    },
+    {
+      "id": "STT-TC-078",
+      "ac": [
+        "STT-AC-049"
+      ],
+      "title": "個金變更（04）同樣觸發舊案複製",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥同一件資料完整的個金有擔參考案件"
+      ],
+      "steps": [
+        "以 lonTypeCode=04、refApplicationNo 帶入該參考案號呼叫建案 API",
+        "以回傳的新案號查主借款人與保證人相關資料表"
+      ],
+      "expected": [
+        "主借款人與保證人資料表在新案號下有由參考案件複製而來的資料"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "變更案沒帶入舊資料等於要重建整份案件；變更是固定的業務類型。"
+      }
+    },
+    {
+      "id": "STT-TC-079",
+      "ac": [
+        "STT-AC-050"
+      ],
+      "title": "企金增貸複製舊案的公司借款人與擔保品資料",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件企金有擔的參考案件，確認其企金主借款人、共借款公司、保證人與擔保品資料皆有值"
+      ],
+      "steps": [
+        "以 lonAttribute=C、secureAttribute=S、lonTypeCode=02、refApplicationNo 帶入該參考案號呼叫建案 API",
+        "以新案號查企金主借款人、共借款公司、保證人與擔保品相關資料表",
+        "以新案號查個金主借款人資料表"
+      ],
+      "expected": [
+        "企金主借款人、共借款公司、保證人與擔保品資料表在新案號下皆有資料",
+        "個金主借款人資料表在新案號下無任何列"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "企金案件資料量大，複製失敗的重打成本極高；企金增貸是常走的分支。"
+      }
+    },
+    {
+      "id": "STT-TC-080",
+      "ac": [
+        "STT-AC-051"
+      ],
+      "title": "參考案件沒有保證人與擔保品時跳過不寫",
+      "type": "boundary",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件個金有擔參考案件，其保證人清單與擔保品提供人清單皆為空"
+      ],
+      "steps": [
+        "以 lonTypeCode=02 引用該案件建案",
+        "記錄回傳的 code",
+        "以新案號查保證人與擔保品相關資料表"
+      ],
+      "expected": [
+        "建案成功回傳 code=0000",
+        "保證人與擔保品相關資料表在新案號下皆無任何列，且沒有寫入空白或全 null 的佔位資料"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "寫入空白佔位列會讓後續頁面誤判案件已有保證人；但無保證人也無擔保品的參考案件相對少見。"
+      }
+    },
+    {
+      "id": "STT-TC-081",
+      "ac": [
+        "STT-AC-052"
+      ],
+      "title": "個金無擔增貸不複製擔保品提供人資料",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件個金無擔的參考案件"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=U、lonTypeCode=02 引用該案件建案",
+        "以新案號查擔保品提供人與擔保品相關資料表",
+        "以新案號查主借款人與保證人資料表"
+      ],
+      "expected": [
+        "擔保品提供人與擔保品相關資料表在新案號下皆無任何列",
+        "主借款人與保證人資料表照常有複製資料"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "無擔案件多出擔保品資料會讓案件屬性與資料互相矛盾；個金無擔增貸是常見組合。"
+      }
+    },
+    {
+      "id": "STT-TC-082",
+      "ac": [
+        "STT-AC-054"
+      ],
+      "title": "無保證人與提供人時檢核旗標改為 N",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件個金有擔參考案件，其保證人清單、擔保人公司清單與擔保品提供人清單皆為空"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=S、lonTypeCode=02 引用該案件建案",
+        "以新案號查個人主借款人資料的 IS_ANY_GUARANTOR 與 IS_ANY_COLLATERAL_PROVIDER",
+        "以新案號查檢核資料中 EPROISU0130 與 EPROISU0140 的值"
+      ],
+      "expected": [
+        "IS_ANY_GUARANTOR 為 N",
+        "IS_ANY_COLLATERAL_PROVIDER 為 N",
+        "EPROISU0130 與 EPROISU0140 皆為 N"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "旗標沒改成 N 會讓案件卡在永遠填不完的保證人頁籤而無法送審；無保證人的個人案件在實務上很常見。"
+      }
+    },
+    {
+      "id": "STT-TC-083",
+      "ac": [
+        "STT-AC-055"
+      ],
+      "title": "有擔保品提供人時檢核旗標改為 Y",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件個金有擔參考案件，其擔保品提供人清單至少一筆"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=S、lonTypeCode=02 引用該案件建案",
+        "以新案號查個人主借款人資料的 IS_ANY_COLLATERAL_PROVIDER",
+        "以新案號查檢核資料中 EPROISU0140 的值"
+      ],
+      "expected": [
+        "IS_ANY_COLLATERAL_PROVIDER 為 Y",
+        "EPROISU0140 為 Y"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "旗標為 N 會讓擔保品頁籤被跳過、有擔案件缺少擔保品資料就送審；有擔保品提供人是有擔案件的常態。"
+      }
+    },
+    {
+      "id": "STT-TC-084",
+      "ac": [
+        "STT-AC-056"
+      ],
+      "title": "企金無保證人時檢核旗標改為 N",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件企金有擔參考案件，其保證人清單與擔保人公司清單皆為空"
+      ],
+      "steps": [
+        "以 lonAttribute=C、secureAttribute=S、lonTypeCode=02 引用該案件建案",
+        "以新案號查企金主借款人資料的 IS_ANY_GUARANTOR",
+        "以新案號查檢核資料中 EPROCSU0130 的值"
+      ],
+      "expected": [
+        "IS_ANY_GUARANTOR 為 N",
+        "EPROCSU0130 為 N"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "旗標沒改會讓企金案件卡在保證人頁籤無法送審；無保證人的公司案件在實務上常見。"
+      }
+    },
+    {
+      "id": "STT-TC-085",
+      "ac": [
+        "STT-AC-057"
+      ],
+      "title": "含父子結構的頁面字串要展開成最小項目",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "準備一組頁面設定，其字串同時含分號分隔的頁面、以及一個用冒號帶出三個逗號分隔子頁面的父子結構"
+      ],
+      "steps": [
+        "以對應的 lonAttribute 與 secureAttribute 建案",
+        "以新案號查該案的檢核資料，列出所有頁面項目"
+      ],
+      "expected": [
+        "父子結構被展開成父頁面與三個子頁面，共四個獨立項目",
+        "沒有任何項目的值仍含冒號或逗號",
+        "分號分隔的其他頁面各自成為一個項目"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "拆解錯誤會讓頁籤檢核對不到實際頁面、案件永遠無法完成必填；每一件案件建立時都會走這段拆解。"
+      }
+    },
+    {
+      "id": "STT-TC-086",
+      "ac": [
+        "STT-AC-057"
+      ],
+      "title": "沒有父子結構的頁面字串照常拆解",
+      "type": "boundary",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "準備一組頁面設定，其字串只有分號分隔、不含任何冒號"
+      ],
+      "steps": [
+        "以對應的 lonAttribute 與 secureAttribute 建案",
+        "以新案號查該案的檢核資料，列出所有頁面項目"
+      ],
+      "expected": [
+        "項目數量等於分號分隔的段數",
+        "每個項目都是完整頁面代號，沒有被誤拆或合併"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "誤拆會讓檢核對不到頁面而卡住案件；但沒有父子結構是較單純的字串，出錯機率低。"
+      }
+    },
+    {
+      "id": "STT-TC-087",
+      "ac": [
+        "STT-AC-058"
+      ],
+      "title": "複製舊案中途失敗必須整筆回復",
+      "type": "txn",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件資料完整的個金有擔參考案件",
+        "在複製保證人資料的步驟注入失敗，例如暫時讓保證人資料表不可寫入"
+      ],
+      "steps": [
+        "以 lonTypeCode=02 引用該參考案件呼叫建案 API",
+        "記錄回傳的 code 與該次取得的案號（若回應中有）",
+        "以當次的年月與組合查流水號表，並在案件主檔、歷程、檢核與所有複製資料表中搜尋該次可能產生的案號"
+      ],
+      "expected": [
+        "回傳系統錯誤而非 0000",
+        "案件主檔、歷程、檢核與所有複製資料表中都查不到該次的案號",
+        "不得出現只寫了主檔而缺少複製資料的半套案件"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "半套案件會讓案號被占用卻無法使用，也無法從畫面清除，後果嚴重且難以回復；但複製中途失敗需要特定的異常條件才會觸發。"
+      },
+      "from": "TC-012"
+    },
+    {
+      "id": "STT-TC-088",
+      "ac": [
+        "STT-AC-058"
+      ],
+      "title": "檢核資料寫入失敗也必須整筆回復",
+      "type": "txn",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "在寫入個金有擔檢核資料表的步驟注入失敗"
+      ],
+      "steps": [
+        "以 lonAttribute=I、secureAttribute=S、lonTypeCode=01 呼叫建案 API",
+        "記錄回傳的 code",
+        "在案件主檔與歷程表中搜尋該次可能產生的案號"
+      ],
+      "expected": [
+        "回傳系統錯誤而非 0000",
+        "案件主檔與歷程表中都查不到該次的案號",
+        "不得出現有主檔卻沒有檢核資料的案件"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "沒有檢核資料的案件在後續頁面完全無法操作，等於死案；檢核寫入失敗需要特定異常條件。"
+      }
+    },
+    {
+      "id": "STT-TC-089",
+      "ac": [
+        "STT-AC-059"
+      ],
+      "title": "建案成功回傳 0000 與新案號",
+      "type": "happy",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥合法參數：lonAttribute=I、secureAttribute=S、productCode=02、lonTypeCode=01、refApplicationNo 空"
+      ],
+      "steps": [
+        "呼叫建案 API",
+        "記錄回傳的 code、message 與 data.applicationNo",
+        "以該 applicationNo 查 TB_LON_SUMMARY_INFO"
+      ],
+      "expected": [
+        "code 為 0000 且 message 為成功訊息，不得回傳 E999 與 System error",
+        "data.applicationNo 不為空",
+        "TB_LON_SUMMARY_INFO 存在該案號的資料，且 APPLICATION_NO 與回傳值完全相同"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "回應碼錯誤會讓前端把成功當失敗、使用者重複起案造成重複案件；規格書的成功範例本身就寫成 E999，實作照抄的機率高。"
+      },
+      "from": "TC-006"
+    },
+    {
+      "id": "STT-TC-090",
+      "ac": [
+        "STT-AC-060"
+      ],
+      "title": "個金展期建案後跳轉 Revised Item 畫面",
+      "type": "integration",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual、Loan Type=Renew(03)，搜尋並勾選一件合法參考案件"
+      ],
+      "steps": [
+        "按下建案按鈕完成建案",
+        "觀察建案成功後前端跳轉到的畫面代號",
+        "確認該畫面的欄位是否可編輯"
+      ],
+      "expected": [
+        "跳轉至 EPROZ00800 Revised Item 畫面",
+        "畫面欄位可編輯，不是唯讀"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "跳錯畫面會讓 AO 漏填展期的修訂項目、案件帶著缺漏送審；但展期案在起案量中佔比低於新案。"
+      }
+    },
+    {
+      "id": "STT-TC-091",
+      "ac": [
+        "STT-AC-060"
+      ],
+      "title": "個金變更建案後跳轉 Revised Item 畫面",
+      "type": "integration",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual、Loan Type=Change Condition(04)，搜尋並勾選一件合法參考案件"
+      ],
+      "steps": [
+        "按下建案按鈕完成建案",
+        "觀察建案成功後前端跳轉到的畫面代號"
+      ],
+      "expected": [
+        "跳轉至 EPROZ00800 Revised Item 畫面且可編輯"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "跳錯畫面會讓變更項目漏填；變更案在起案量中佔比低於新案。"
+      }
+    },
+    {
+      "id": "STT-TC-092",
+      "ac": [
+        "STT-AC-061"
+      ],
+      "title": "個金新案建立後進入 ISU 頁面族群",
+      "type": "integration",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Customer Type=Individual、Product Type=Secured、任一產品、Loan Type=New(01)"
+      ],
+      "steps": [
+        "按下建案按鈕完成建案",
+        "觀察前端跳轉到的畫面代號",
+        "確認該畫面是否為 Main Borrower Info 且可編輯"
+      ],
+      "expected": [
+        "跳轉至 ISU 頁面族群的 Main Borrower Info 畫面",
+        "不得進入 CSU 頁面族群",
+        "畫面欄位可編輯"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "進錯頁面族群等於整個案件走錯個金企金流程、後續所有頁籤都不對；個金新案是最大宗的起案類型。"
+      },
+      "from": "SIT-BIBLE-001"
+    },
+    {
+      "id": "STT-TC-093",
+      "ac": [
+        "STT-AC-062"
+      ],
+      "title": "企金新案建立後進入 CSU 頁面族群",
+      "type": "integration",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Customer Type=Corporate、Product Type=Secured、任一產品、Loan Type=New(01)"
+      ],
+      "steps": [
+        "按下建案按鈕完成建案",
+        "觀察前端跳轉到的畫面代號",
+        "確認該畫面是否為 Main Borrower Info 且可編輯"
+      ],
+      "expected": [
+        "跳轉至 CSU 頁面族群的 Main Borrower Info 畫面",
+        "不得進入 ISU 頁面族群",
+        "畫面欄位可編輯"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "進錯頁面族群會讓企金案件套用個金的頁籤與檢核；企金新案是主要起案類型之一。"
+      },
+      "from": "SIT-BIBLE-002"
+    },
+    {
+      "id": "STT-TC-094",
+      "ac": [
+        "STT-AC-022"
+      ],
+      "title": "一般產品可用 Renew 建案並帶入參考案件",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入並進入新起案件頁",
+        "已選 Individual + Secured + Mortgage Loan(01) + Sub-Product Type(2) 任一值",
+        "備妥一件同屬個金有擔的合法參考案件"
+      ],
+      "steps": [
+        "Loan Type 選擇 Renew(03)",
+        "在 Matching Engine 以姓名與生日搜尋並勾選該參考案件",
+        "按下建案按鈕",
+        "以回傳的新案號查 TB_LON_SUMMARY_INFO 的 LON_TYPE_CODE"
+      ],
+      "expected": [
+        "Renew(03) 可被選取且建案成功回傳 code=0000",
+        "TB_LON_SUMMARY_INFO 的 LON_TYPE_CODE 為 03"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "Renew 只在預設分支才出現，若選項給了卻建不起來等於展期業務中斷；一般產品涵蓋大多數的產品別。"
+      }
+    },
+    {
+      "id": "STT-TC-095",
+      "ac": [
+        "STT-AC-044"
+      ],
+      "title": "不同分行起案時歷程記錄跟著換分行",
+      "type": "state",
+      "setup": [
+        "準備分屬兩個分行的 AO（002）帳號各一組，記下各自的分行代號與分行名稱"
+      ],
+      "steps": [
+        "以第一個分行的帳號建案，記下 applicationNo",
+        "以第二個分行的帳號再建一件，記下 applicationNo",
+        "分別以兩個案號查 TB_APP_HISTORY 的處理分行代號與分行名稱"
+      ],
+      "expected": [
+        "兩筆歷程的處理分行代號與分行名稱分別對應各自登入者的分行",
+        "不得兩筆都記成同一個分行，也不得沿用前一次的分行資訊"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "Low",
+        "level": "Medium",
+        "why": "分行記錄錯誤會讓稽核追不到實際經辦單位；但同一環境連續切換不同分行帳號起案的情境相對少見。"
+      }
+    },
+    {
+      "id": "STT-TC-096",
+      "ac": [
+        "STT-AC-050"
+      ],
+      "title": "企金無擔增貸不複製擔保品資料",
+      "type": "state",
+      "setup": [
+        "以 AO（002）登入取得有效 token",
+        "備妥一件企金無擔的參考案件，其企金主借款人與保證人資料皆有值"
+      ],
+      "steps": [
+        "以 lonAttribute=C、secureAttribute=U、lonTypeCode=02 引用該案件建案",
+        "以新案號查擔保品與擔保品提供人相關資料表",
+        "以新案號查企金主借款人與保證人資料表"
+      ],
+      "expected": [
+        "擔保品與擔保品提供人相關資料表在新案號下皆無任何列",
+        "企金主借款人與保證人資料表照常有複製資料"
+      ],
+      "risk": {
+        "impact": "High",
+        "likelihood": "High",
+        "level": "High",
+        "why": "無擔案件多出擔保品資料會讓案件屬性與資料互相矛盾；企金無擔增貸是常見組合。"
+      }
+    }
+  ],
+  "issues": [
+    {
+      "id": "STT-ISS-001",
+      "type": "CONFLICT",
+      "text": "Loan Type 可選項目三方不一致：PRD 4.2 說 Staff Housing Loan(03) 與 Staff Vehicle Loan(01/U) 允許 91、92、94、01、02、04；前端規格書 v1.11 的選項邏輯只給 New(01)、Additional(02)、Change Condition(04)，其修訂紀錄亦寫「調整 Loan Type 只顯示新案選項(01~04)」；後端規格書的案件取號表則把 91～94 標上刪除線。需確認 91～94 是否已廢止。",
+      "docs": [
+        "STT-DOC-002",
+        "STT-DOC-003",
+        "STT-DOC-005"
+      ],
+      "refs": [
+        "STT-REQ-016"
+      ],
+      "owner": "PM"
+    },
+    {
+      "id": "STT-ISS-002",
+      "type": "CONFLICT",
+      "text": "建案歷程的 APP_PROCESS_CODE 三方說法不一：PRD 5.1 記 01，後端規格書 v1.5 的 historyMap 記 00，Bible 的狀態表則把 00 定義為新建案、01 定義為進件中。需確認建案當下應寫入哪一個值。 Bible 待確認問題 Q-004 另記錄 source 已確認建案會寫入 APP_PROCESS_CODE=01，與後端規格書的 00 直接相反。",
+      "docs": [
+        "STT-DOC-001",
+        "STT-DOC-002",
+        "STT-DOC-003"
+      ],
+      "refs": [
+        "STT-REQ-031"
+      ],
+      "owner": "SA",
+      "from": "Q-004"
+    },
+    {
+      "id": "STT-ISS-003",
+      "type": "PENDING",
+      "text": "後端規格書把 REF_APPLICATION_NO 的寫入條件寫成 lonTypeCode 同時等於 03 且 04（IF lonTypeCode = '03' && lonTypeCode = '04'），此條件永遠不成立，實際應為或條件、且是否涵蓋 02 也未定。在條件修正前無法定義可判定的驗收結果。",
+      "docs": [
+        "STT-DOC-003"
+      ],
+      "refs": [
+        "STT-REQ-032",
+        "STT-REQ-011"
+      ],
+      "owner": "RD"
+    },
+    {
+      "id": "STT-ISS-004",
+      "type": "CONFLICT",
+      "text": "APPLICATION_NO 的分行與部門段落順序與長度互相矛盾：PRD 4.5 寫 branchId + deptCode；後端規格書取號表的欄位標題順序是「起案分行、起案部門」，但來源列卻寫成起案分行取 authorization.DEPT_CODE、起案部門取 authorization.BRANCH_CODE，且範例 00012012202412IS020002 的前兩段長度為 5 碼與 3 碼。需確認正確的順序與各段長度。",
+      "docs": [
+        "STT-DOC-002",
+        "STT-DOC-003"
+      ],
+      "refs": [
+        "STT-REQ-026"
+      ],
+      "owner": "SA"
+    },
+    {
+      "id": "STT-ISS-005",
+      "type": "GAP",
+      "text": "參考案件資格條件只在 PRD 4.3 出現（CASE_PROGRESS in 08/09/14 或 APP_CON_TYPE 不為空，且註明正式語意待確認），案件清單查詢 API 的後端規格書 v1.3 完全沒有這兩個欄位，也沒有任何資格過濾條件的描述。在後端補齊之前無法驗證查詢結果是否只含合格案件。",
+      "docs": [
+        "STT-DOC-002",
+        "STT-DOC-004"
+      ],
+      "refs": [
+        "STT-REQ-024"
+      ],
+      "owner": "SA",
+      "from": "TBD-006"
+    },
+    {
+      "id": "STT-ISS-006",
+      "type": "PENDING",
+      "text": "複製參考案件資料的逐表逐欄矩陣尚未完整：PRD 4.6 對 IU、CS、CU 三種 Additional 分支只寫「詳細逐欄矩陣待 RD 補齊」，4.7 的 version mapping（reference application version after 02.00／02.11）亦註明待補，CU 的 checkpoint 特殊排除也沒有欄位級說明。無法逐欄驗證排除與清除是否正確。 另 PRD 0.3 TBD-009 亦記錄 version after 02.00／02.11 的欄位 mapping 差異待補。",
+      "docs": [
+        "STT-DOC-002",
+        "STT-DOC-003"
+      ],
+      "refs": [
+        "STT-REQ-035"
+      ],
+      "owner": "RD",
+      "from": "TBD-004"
+    },
+    {
+      "id": "STT-ISS-007",
+      "type": "CONFLICT",
+      "text": "後端規格書 v1.5 的下行回應範例把成功案例標成 code=E999、message=System error，與同一份文件的處理結果代碼表（0000 = Success／交易成功）互相矛盾。成功時究竟回 0000 還是 E999 需確認，範例應是複製貼上錯誤。",
+      "docs": [
+        "STT-DOC-003"
+      ],
+      "refs": [
+        "STT-REQ-040"
+      ],
+      "owner": "RD"
+    },
+    {
+      "id": "STT-ISS-008",
+      "type": "CONFLICT",
+      "text": "後端規格書 v1.5 上行電文表把 refApplicationNo 的「必要」欄標成 Y（一律必填），但同一列的說明寫「若 lonTypeCode = 02、03、04 時須檢核 refApplicationNo 為必填」。新案（01）到底允不允許空值需確認，否則 lonTypeCode=01 的正向案例無法判定通過與否。",
+      "docs": [
+        "STT-DOC-003"
+      ],
+      "refs": [
+        "STT-REQ-011"
+      ],
+      "owner": "RD"
+    },
+    {
+      "id": "STT-ISS-009",
+      "type": "PENDING",
+      "text": "LON_TYPE_CODE 與 PRODUCT_CODE、MTG_PRODUCT_CODE 的正式業務名稱、允許組合與 code table 尚未確認（PRD 0.3 TBD-001、TBD-002）。測試資料只能沿用文件散見的範例值，無法涵蓋完整值域。 本則同時涵蓋 TBD-001（LON_TYPE_CODE）與 TBD-002（PRODUCT_CODE／MTG_PRODUCT_CODE）。",
+      "docs": [
+        "STT-DOC-002"
+      ],
+      "refs": [
+        "STT-REQ-016"
+      ],
+      "owner": "PM",
+      "from": "TBD-001"
+    },
+    {
+      "id": "STT-ISS-010",
+      "type": "PENDING",
+      "text": "案號流水號表在重構後的鎖定與交易隔離策略尚未設計（PRD 0.3 TBD-003）。併發測試只能驗證「不得產生重複案號」這個結果，無法驗證鎖定機制本身是否正確。",
+      "docs": [
+        "STT-DOC-002"
+      ],
+      "refs": [
+        "STT-REQ-027",
+        "STT-REQ-028"
+      ],
+      "owner": "RD",
+      "from": "TBD-003"
+    },
+    {
+      "id": "STT-ISS-011",
+      "type": "PENDING",
+      "text": "企金無擔（CU）案件 checkpoint 排除頁面的業務原因、以及重構後是否保留該排除，尚未確認（PRD 0.3 TBD-007）。CU 的 checkpoint 內容無法逐頁驗證。",
+      "docs": [
+        "STT-DOC-002"
+      ],
+      "refs": [
+        "STT-REQ-033"
+      ],
+      "owner": "SA",
+      "from": "TBD-007"
+    },
+    {
+      "id": "STT-ISS-012",
+      "type": "PENDING",
+      "text": "產品必填的錯誤訊息 key EPRZ0O0200_MSG_ERRO_PRODUCT 疑似拼寫錯誤，是否修正或建立相容 mapping 尚未決定（PRD 0.3 TBD-008）。錯誤訊息的 key 值無法納入驗證點。",
+      "docs": [
+        "STT-DOC-002"
+      ],
+      "refs": [
+        "STT-REQ-018"
+      ],
+      "owner": "RD",
+      "from": "TBD-008"
+    },
+    {
+      "id": "STT-ISS-013",
+      "type": "AMBIGUOUS",
+      "text": "前端規格書在 Matching Engine 的資料來源與 Search 鈕都寫「請參考 6.3 Call eProposal 電文(epl-case-application_借款人、借款公司資訊)」，但實際存在的後端規格書是 epl-list-caseapplication_借款人、借款公司資訊清單 v1.3，前端第 6 章的小節標題也寫 epl-list-caseapplication。兩個名稱是否為同一支電文需確認，否則無法確定測試要打哪一支 API。",
+      "docs": [
+        "STT-DOC-004",
+        "STT-DOC-005"
+      ],
+      "refs": [
+        "STT-REQ-023"
+      ],
+      "owner": "SA"
+    },
+    {
+      "id": "STT-ISS-014",
+      "type": "PENDING",
+      "text": "舊案判斷 getIsOld 對 APPLICATION_DATE=1900-01-01 的業務意義尚未確認，也未確定重構後是否保留此 legacy 規則（PRD 0.3 TBD-005）。若保留，參考案件查詢結果需要對應的邊界測試資料。",
+      "docs": [
+        "STT-DOC-002"
+      ],
+      "refs": [
+        "STT-REQ-024"
+      ],
+      "owner": "SA",
+      "from": "TBD-005"
+    },
+    {
+      "id": "STT-ISS-015",
+      "type": "PENDING",
+      "text": "前端規格書中三種情境的 Confirm 鈕，「資料來源」一欄皆填「待補」，只有處理邏輯描述。按鈕實際要帶哪些欄位給建案 API 需補齊，否則前端送出的參數組合無法逐欄驗證。",
+      "docs": [
+        "STT-DOC-005"
+      ],
+      "refs": [
+        "STT-REQ-040"
+      ],
+      "owner": "RD"
+    }
+  ]
+}
