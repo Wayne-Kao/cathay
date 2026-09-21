@@ -1,0 +1,2083 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>spec-to-tests Viewer</title>
+  <style>
+    :root { color-scheme:light; --ink:#17243b; --muted:#64748b; --line:#dbe3ef; --wire:#c3d0e0; --accent:#075985; --surface:#f8fafc; --high:#b91c1c; --medium:#a16207; --low:#15803d; --pad:26px; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font:14px/1.55 Inter,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif; color:var(--ink); background:#eef3f8; }
+    button,input,select,textarea { font:inherit; }
+    button { border:1px solid #b6c3d4; border-radius:8px; padding:8px 12px; color:var(--ink); background:white; cursor:pointer; }
+    button:hover { border-color:var(--accent); }
+    button:focus-visible,input:focus-visible,[tabindex]:focus-visible { outline:3px solid #38bdf855; outline-offset:2px; }
+    button:disabled { cursor:not-allowed; opacity:.4; }
+    .primary { color:white; border-color:var(--accent); background:var(--accent); }
+    .hidden { display:none !important; }
+
+    .empty-state { display:grid; min-height:100vh; place-items:center; text-align:center; }
+    .empty-state .card { width:min(520px,calc(100vw - 32px)); padding:32px 28px; border:1px solid var(--line); border-radius:16px; background:white; box-shadow:0 12px 40px #0f172a12; }
+    .empty-state h1 { margin:0 0 6px; font-size:20px; }
+    .empty-state p { margin:0 0 18px; color:var(--muted); }
+    .empty-state button { min-width:160px; padding:12px 20px; }
+    .empty-state .hint { margin-top:16px; font-size:12px; }
+    .empty-state code { padding:1px 6px; border:1px solid var(--line); border-radius:5px; background:var(--surface); }
+
+    .app { min-height:100vh; }
+    .topbar { position:sticky; top:0; z-index:20; background:#eef3f8; }
+    .appbar { display:flex; gap:12px; align-items:center; padding:12px 22px; border-bottom:1px solid var(--line); background:white; box-shadow:0 4px 18px #0f172a0a; }
+    .appbar h1 { margin:0; font-size:17px; white-space:nowrap; }
+    .appbar .meta { overflow:hidden; color:var(--muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+    .nav-history { display:flex; gap:4px; align-items:center; }
+    .nav-label { max-width:min(280px,22vw); overflow:hidden; color:var(--muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+    .actions { display:flex; gap:8px; align-items:center; margin-left:auto; }
+    .icon-button { display:grid; place-items:center; width:38px; height:38px; padding:0; }
+    .icon-button svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    #search { width:min(280px,35vw); padding:8px 10px; border:1px solid #b6c3d4; border-radius:8px; }
+    input[type=file] { display:none; }
+    nav { display:flex; gap:6px; padding:10px 20px; overflow:auto; background:#eef3f8; }
+    nav button { white-space:nowrap; }
+    nav button.active { color:white; border-color:var(--accent); background:var(--accent); }
+    nav .tab-count { margin-left:6px; opacity:.66; font-size:12px; font-variant-numeric:tabular-nums; }
+    main { max-width:1680px; margin:auto; padding:6px 20px 24px; }
+    .panel { min-height:200px; padding:14px 18px 18px; border:1px solid var(--line); border-radius:12px; background:white; box-shadow:0 8px 28px #0f172a0d; }
+
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+    .toolbar-actions { display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:flex-end; min-width:0; margin-left:auto; }
+    .toolbar .count { color:var(--muted); font-weight:650; white-space:nowrap; }
+    .mini { padding:5px 9px; border-radius:99px; font-size:12px; white-space:nowrap; }
+    .mini.on { color:white; border-color:var(--accent); background:var(--accent); }
+    .mini .n { margin-left:5px; opacity:.7; font-variant-numeric:tabular-nums; }
+    .group { display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding-right:6px; border-right:1px solid var(--line); }
+    .group-label { color:var(--muted); font-size:12px; }
+
+    .stats { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .stat { min-width:96px; padding:7px 11px; border:1px solid var(--line); border-radius:9px; background:var(--surface); font-size:12px; text-align:left; }
+    .stat .hint { display:block; margin-top:1px; color:var(--muted); font-size:11px; }
+    .stat .meter { display:block; height:3px; margin-top:5px; border-radius:2px; background:#e2e8f0; overflow:hidden; }
+    .stat .meter i { display:block; height:100%; background:#94a3b8; }
+    .stat.ok { border-color:#86efac; background:#f0fdf4; }
+    .stat.ok strong { color:var(--low); }
+    .stat.ok .meter i { background:var(--low); }
+    .stat.warn .meter i { background:var(--medium); }
+    .stat.blocked .meter i { background:var(--high); }
+    .stat:not(:disabled) { cursor:pointer; }
+    .stat:not(:disabled):hover { border-color:var(--accent); }
+    .stat strong { display:block; font-size:16px; font-variant-numeric:tabular-nums; }
+    .stat.warn { border-color:#fcd34d; background:#fffbeb; }
+    .stat.warn strong { color:var(--medium); }
+    .stat.blocked { border-color:#fca5a5; background:#fef2f2; }
+    .stat.blocked strong { color:var(--high); }
+
+    .scroller { overflow:auto; border:1px solid var(--line); border-radius:10px; overscroll-behavior:contain; }
+    table { border-collapse:separate; border-spacing:0; table-layout:fixed; }
+    th,td { padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+    th { position:sticky; top:0; z-index:6; overflow:hidden; padding-right:16px; background:var(--surface); box-shadow:inset 0 -1px 0 var(--line); text-overflow:ellipsis; white-space:nowrap; }
+    th.sortable { cursor:pointer; user-select:none; }
+    th.sortable:hover { color:var(--accent); background:#eff6ff; }
+    th .arrow { color:#94a3b8; font-size:11px; }
+    th.sorted,th.sorted .arrow { color:var(--accent); }
+    th .resizer { position:absolute; top:0; right:0; bottom:0; width:9px; cursor:col-resize; touch-action:none; }
+    th .resizer::after { position:absolute; top:6px; right:4px; bottom:6px; border-right:1px solid var(--wire); content:""; }
+    th .resizer:hover::after { border-right:2px solid var(--accent); }
+    tbody td:first-child,thead th:first-child { position:sticky; left:0; z-index:5; background:white; box-shadow:1px 0 0 var(--line); }
+    thead th:first-child { z-index:8; background:var(--surface); box-shadow:1px 0 0 var(--line),inset 0 -1px 0 var(--line); }
+    td:empty::after { color:var(--muted); content:"—"; }
+    tbody tr:hover td { background:#f8fbff; }
+    tbody tr.selected td,tbody tr.selected td:first-child { background:#eff6ff; }
+    .clamp { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:4; }
+    ol.steps { margin:0; padding-left:18px; }
+    ol.steps li { margin:2px 0; }
+    .highlight { animation:highlight 2.2s ease-out; }
+    @keyframes highlight { 0%,35% { background:#fef3c7; } 100% { background:transparent; } }
+
+    .badge { display:inline-block; padding:2px 7px; border-radius:99px; color:white; font-size:12px; font-weight:700; white-space:nowrap; }
+    .badge.High,.badge.CONFLICT { background:var(--high); }
+    .badge.Medium,.badge.PENDING { background:var(--medium); }
+    .badge.Low,.badge.GAP { background:var(--low); }
+    .badge.AMBIGUOUS { background:#9333ea; }
+    .badge.UNVERIFIABLE { background:#be185d; }
+    .badge.ADDED { background:var(--low); }
+    .badge.MODIFIED { background:var(--medium); }
+    .badge.REMOVED { background:var(--high); }
+    .badge.UNCHANGED { background:#94a3b8; }
+    .badge.BIBLE { background:#4f46e5; }
+    .badge.PRD { background:#0e7490; }
+    .badge.SRS { background:#0369a1; }
+    .badge.OTHER { background:#64748b; }
+    .badge.owner { color:var(--ink); border:1px solid var(--wire); background:var(--surface); }
+    .badge.happy { background:#15803d; }
+    .badge.boundary { background:#a16207; }
+    .badge.negative { background:#b91c1c; }
+    .badge.auth { background:#7c3aed; }
+    .badge.state { background:#0e7490; }
+    .badge.txn { background:#b45309; }
+    .badge.concurrent { background:#be185d; }
+    .badge.integration { background:#1d4ed8; }
+    .dot { display:inline-block; width:9px; height:9px; border-radius:99px; }
+    .dot.High { background:var(--high); }
+    .dot.Medium { background:var(--medium); }
+    .dot.Low { background:var(--low); }
+
+    .id-link { border:0; padding:0 1px; color:var(--accent); background:transparent; font-weight:650; font-variant-numeric:tabular-nums; text-decoration:underline; }
+    .id-link:hover { color:#0c4a6e; }
+    .missing-id { color:var(--high); text-decoration:line-through; }
+    .muted { color:var(--muted); font-size:12px; }
+    .chips { display:flex; flex-wrap:wrap; gap:6px; min-width:0; }
+    .src-chip { display:inline-block; max-width:100%; overflow:hidden; padding:1px 7px; border:1px solid var(--line); border-radius:99px; background:var(--surface); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+    .src-chip b { color:var(--accent); font-variant-numeric:tabular-nums; }
+    .from-chip { display:inline-block; padding:1px 7px; border:1px dashed var(--wire); border-radius:99px; color:var(--muted); font-size:12px; }
+    .blocked-chip { display:inline-block; padding:1px 7px; border:1px solid #fca5a5; border-radius:99px; background:#fef2f2; }
+    .blocked-chip .id-link { color:var(--high); }
+
+    /* ---- RTM 節點 ---- */
+    .entity { position:relative; display:grid; grid-template-columns:38px 44px 1fr 46px; gap:8px; align-items:center; width:420px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:white; text-align:left; }
+    .entity.compact { grid-template-columns:38px auto auto; width:auto; }
+    .entity:hover { border-color:#94a3b8; background:#f8fbff; }
+    .entity.root { border-color:#c8d3e2; background:#e9eef5; }
+    .entity.req { border-color:#d5dfec; background:#f3f6fb; }
+    .entity.ac { border-color:#e0e7f1; background:#fafcfe; }
+    .entity.ac.is-blocked { border-color:#fca5a5; background:#fef2f2; }
+    .entity.tc { border-color:#e6ecf4; background:white; }
+    .entity.iss { border-color:#fca5a5; background:#fef2f2; }
+    .entity.selected { border-color:var(--accent); box-shadow:0 0 0 2px #38bdf855; }
+    .e-kind { display:grid; place-items:center; width:100%; height:18px; border-radius:5px; color:white; font-size:10px; font-weight:800; letter-spacing:.06em; }
+    .entity.root .e-kind { background:#334155; }
+    .entity.req .e-kind { background:var(--accent); }
+    .entity.ac .e-kind { background:#0e7490; }
+    .entity.tc .e-kind { background:#4f46e5; }
+    .entity.iss .e-kind { background:var(--high); }
+    .e-id { font-weight:650; font-variant-numeric:tabular-nums; }
+    .e-label { display:-webkit-box; min-width:0; overflow:hidden; color:var(--muted); line-height:1.35; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+    .entity.req .e-label,.entity.root .e-label { color:var(--ink); }
+    .e-tail { display:inline-flex; gap:4px; align-items:center; justify-content:flex-end; color:var(--muted); font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; }
+    .e-tail.zero { color:var(--medium); }
+    .e-caret { display:inline-grid; place-items:center; width:16px; height:16px; border:0; padding:0; border-radius:4px; color:#94a3b8; background:transparent; font-size:10px; line-height:1; }
+    .e-caret:hover { color:var(--accent); background:#e0f2fe; }
+    .e-caret.on { color:var(--accent); }
+
+    .tree { display:flex; flex-direction:column; gap:4px; padding:4px 2px; }
+    .node { display:flex; flex-direction:column; gap:4px; }
+    .node.collapsed > .tree-children { display:none; }
+    .tree-children { margin-left:15px; }
+    .map { display:inline-flex; flex-direction:column; padding:10px 24px 10px 6px; }
+    .branch { display:flex; align-items:flex-start; }
+    .branch.collapsed > .map-children { display:none; }
+    .map-children { gap:6px; }
+    .map-children,.tree-children { position:relative; display:flex; flex-direction:column; gap:4px; padding-left:var(--pad); }
+    .map-children::before,.tree-children::before { position:absolute; top:var(--spine-top,0); bottom:var(--spine-bottom,0); left:0; border-left:1px solid var(--wire); content:""; }
+    .map-children > .branch > .entity::before,.tree-children > .node > .entity::before { position:absolute; top:50%; left:calc(-1 * var(--pad)); width:var(--pad); border-top:1px solid var(--wire); content:""; }
+    .branch:not(.leaf):not(.collapsed) > .entity::after { position:absolute; top:50%; right:calc(-1 * var(--pad)); width:var(--pad); border-top:1px solid var(--wire); content:""; }
+
+    .hover-card { position:fixed; z-index:45; width:min(400px,calc(100vw - 24px)); padding:10px 12px; border:1px solid var(--line); border-radius:11px; background:white; box-shadow:0 18px 44px #0f172a2e; pointer-events:none; }
+    .hc-head { display:flex; gap:8px; align-items:center; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--line); color:var(--accent); font-size:13px; font-weight:700; }
+    .hc-head .hc-go { margin-left:auto; color:var(--muted); font-size:11px; font-weight:600; white-space:nowrap; }
+    .hc-row { display:grid; grid-template-columns:64px 1fr; gap:8px; margin-top:5px; font-size:12px; }
+    .hc-key { color:var(--muted); font-weight:650; }
+    .hc-val { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow-wrap:anywhere; }
+
+    /* ---- 明細抽屜 ---- */
+    .drawer { position:fixed; top:0; right:0; bottom:0; z-index:60; display:flex; width:min(540px,100vw); flex-direction:column; border-left:1px solid var(--line); background:white; box-shadow:-18px 0 44px #0f172a1f; transform:translateX(101%); transition:transform .18s ease; }
+    .drawer.open { transform:none; }
+    .drawer-head { display:flex; gap:10px; align-items:center; padding:14px 16px; border-bottom:1px solid var(--line); background:var(--surface); }
+    .drawer-head .kind { display:grid; place-items:center; width:44px; height:20px; border-radius:5px; color:white; font-size:10px; font-weight:800; letter-spacing:.06em; }
+    .drawer-head .did { font-size:15px; font-weight:750; font-variant-numeric:tabular-nums; }
+    .drawer-head .spacer { margin-left:auto; }
+    .drawer-head button { padding:6px 10px; font-size:12px; }
+    .drawer-body { flex:1; overflow:auto; padding:16px 18px 40px; overscroll-behavior:contain; }
+    .d-title { margin:0 0 12px; font-size:16px; line-height:1.5; }
+    .d-sec { margin:0 0 14px; }
+    .d-sec > h3 { display:flex; gap:8px; align-items:center; margin:0 0 6px; color:var(--muted); font-size:11px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
+    .d-body { overflow-wrap:anywhere; white-space:pre-wrap; }
+    .gwt { display:grid; gap:8px; }
+    .gwt div { padding:9px 11px; border-left:3px solid var(--wire); border-radius:0 8px 8px 0; background:var(--surface); }
+    .gwt b { display:block; margin-bottom:2px; color:var(--accent); font-size:11px; letter-spacing:.06em; }
+    .gwt .g { border-left-color:#94a3b8; }
+    .gwt .w { border-left-color:#0e7490; }
+    .gwt .t { border-left-color:var(--accent); }
+    .d-list { margin:0; padding-left:20px; }
+    .d-list li { margin:4px 0; overflow-wrap:anywhere; }
+    .risk-box { padding:10px 12px; border:1px solid var(--line); border-radius:9px; background:var(--surface); }
+    .risk-box .axes { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+    .risk-box .why { color:var(--ink); }
+    .issue-inline { margin:6px 0; padding:10px 12px; border:1px solid #fca5a5; border-radius:9px; background:#fef2f2; }
+    .issue-inline .head { display:flex; gap:8px; align-items:center; margin-bottom:5px; }
+    .d-empty { color:var(--muted); }
+    .link-list { display:flex; flex-direction:column; gap:5px; }
+    .link-row { display:flex; gap:8px; align-items:baseline; width:100%; padding:6px 9px; border:1px solid var(--line); border-radius:8px; background:white; text-align:left; }
+    .link-row:hover { border-color:var(--accent); background:#f8fbff; }
+    .link-row .rid { color:var(--accent); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .link-row .rtext { min-width:0; overflow:hidden; color:var(--ink); text-overflow:ellipsis; white-space:nowrap; }
+    .link-row .rtail { margin-left:auto; }
+
+    /* ---- Issues 卡片 ---- */
+    .issue-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); }
+    .issue-card { display:flex; flex-direction:column; padding:13px 15px; border:1px solid var(--line); border-left:4px solid var(--wire); border-radius:11px; background:white; }
+    .issue-card.CONFLICT { border-left-color:var(--high); }
+    .issue-card.AMBIGUOUS { border-left-color:#9333ea; }
+    .issue-card.UNVERIFIABLE { border-left-color:#be185d; }
+    .issue-card.PENDING { border-left-color:var(--medium); }
+    .issue-card.GAP { border-left-color:var(--low); }
+    .issue-card .ihead { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin-bottom:8px; }
+    .issue-card .iid { color:var(--accent); font-weight:750; font-variant-numeric:tabular-nums; }
+    .issue-card .itext { margin-bottom:10px; overflow-wrap:anywhere; }
+    .issue-card .imeta { display:grid; grid-template-columns:auto 1fr; gap:5px 10px; margin-top:auto; padding-top:9px; border-top:1px solid var(--line); font-size:12px; }
+    .issue-card .imeta dt { color:var(--muted); font-weight:650; white-space:nowrap; }
+    .issue-card .imeta dd { min-width:0; margin:0; }
+
+    /* ---- 狀態、提示、說明 ---- */
+    .status-area { position:fixed; right:18px; bottom:18px; z-index:30; display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+    .status-pill { border:0; border-radius:99px; box-shadow:0 10px 30px #0f172a33; font-weight:700; }
+    .status-pill.valid { color:white; background:var(--low); }
+    .status-pill.invalid { color:white; background:var(--high); }
+    .status-pill.warn { color:white; background:var(--medium); }
+    .findings-drawer { width:min(460px,calc(100vw - 36px)); max-height:60vh; overflow:auto; padding:14px; border:1px solid var(--line); border-radius:12px; background:white; box-shadow:0 16px 44px #0f172a33; }
+    .findings-drawer h2 { margin:0 0 10px; font-size:16px; }
+    .finding { margin:8px 0; padding:9px 10px; border-left:4px solid var(--medium); border-radius:4px; background:#fffbeb; }
+    .finding.error { border-color:var(--high); background:#fef2f2; }
+    .finding code { color:var(--muted); font-size:11px; font-weight:700; }
+    .findings-foot { margin-top:12px; padding-top:10px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+    .findings-foot code { padding:1px 5px; border:1px solid var(--line); border-radius:4px; background:var(--surface); }
+    .toasts { position:fixed; top:14px; left:50%; z-index:70; display:flex; width:min(420px,calc(100vw - 36px)); flex-direction:column; gap:8px; align-items:center; transform:translateX(-50%); pointer-events:none; }
+    .toast { padding:10px 12px; border-radius:9px; color:white; background:#334155; box-shadow:0 10px 30px #0f172a33; }
+    .toast.error { background:var(--high); }
+    .modal-backdrop { position:fixed; inset:0; z-index:80; display:grid; place-items:center; padding:20px; background:#0f172a88; }
+    .modal { width:min(560px,100%); padding:20px; border-radius:14px; background:white; box-shadow:0 20px 60px #0f172a55; }
+    .modal h2 { margin:0 0 4px; }
+    .shortcut-list { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin:14px 0; }
+    .shortcut-list code { padding:1px 6px; border:1px solid var(--line); border-radius:5px; background:var(--surface); }
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; }
+    .dropzone { position:fixed; inset:0; z-index:90; display:grid; place-items:center; border:3px dashed var(--accent); background:#e0f2fecc; color:var(--accent); font-size:18px; font-weight:700; }
+
+    /* ---- UI Coverage ---- */
+    .ui-legend { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 10px; color:var(--muted); font-size:12px; }
+    .ui-legend span { display:inline-flex; gap:5px; align-items:center; }
+    .ui-legend i.cell { width:16px; min-width:0; height:16px; border-radius:4px; cursor:default; }
+    table.ui-matrix { width:100%; }
+    table.ui-matrix th,table.ui-matrix td { padding:5px 5px; text-align:center; }
+    table.ui-matrix th:first-child,table.ui-matrix td:first-child { text-align:left; padding-left:10px; }
+    table.ui-matrix th.aspect { padding-right:5px; font-size:12px; line-height:1.2; }
+    table.ui-matrix th.aspect small { display:block; color:var(--muted); font-size:10px; font-weight:500; }
+    tr.ui-section td,tr.ui-section td:first-child { padding:5px 10px; background:var(--surface); color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.04em; text-align:left; }
+    .ui-control { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .ui-control .fld { font-weight:700; font-variant-numeric:tabular-nums; }
+    .ui-control .lbl { overflow:hidden; color:var(--muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+    .cell { display:inline-grid; place-items:center; width:100%; min-width:40px; height:30px; padding:0; border:1px solid transparent; border-radius:7px; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; cursor:pointer; }
+    .cell:hover { border-color:var(--accent); }
+    .cell.specified { color:#166534; background:#dcfce7; }
+    .cell.gap { color:#9a3412; background:#ffedd5; }
+    .cell.blocked { color:var(--high); background:#fee2e2; }
+    .cell.issue { color:#9f1239; background:#fce7f3; }
+    .cell.not-applicable { color:#94a3b8; background:#f1f5f9; font-weight:500; }
+    .cell.unknown { color:var(--high); background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 4px,white 4px,white 8px); }
+    .cell.selected { box-shadow:0 0 0 2px var(--accent); }
+    .badge.component { color:var(--ink); border:1px solid var(--wire); background:white; font-weight:600; }
+    .badge.specified { background:#15803d; }
+    .badge.not-applicable { background:#94a3b8; }
+    .badge.issue { background:#be123c; }
+    .badge.unknown { background:var(--high); }
+    .aspect-block { margin:0 0 8px; padding:9px 11px; border:1px solid var(--line); border-left:4px solid var(--wire); border-radius:0 9px 9px 0; background:white; }
+    .aspect-block.specified { border-left-color:#15803d; }
+    .aspect-block.issue { border-left-color:#be123c; }
+    .aspect-block.not-applicable { border-left-color:#cbd5e1; background:var(--surface); }
+    .aspect-block.unknown { border-left-color:var(--high); }
+    .aspect-block.focus { box-shadow:0 0 0 2px #38bdf855; }
+    .aspect-block .ahead { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin-bottom:5px; }
+    .aspect-block .ahead b { font-size:13px; }
+    .aspect-block .chain { margin-top:6px; }
+    .aspect-block .chips { margin-top:6px; }
+    .kv { display:grid; grid-template-columns:auto 1fr; gap:5px 12px; margin:0; font-size:13px; }
+    .kv dt { color:var(--muted); font-weight:650; white-space:nowrap; }
+    .kv dd { min-width:0; margin:0; overflow-wrap:anywhere; }
+    .d-sec code,.chips code { padding:1px 6px; border:1px solid var(--line); border-radius:5px; background:var(--surface); font-size:12px; overflow-wrap:anywhere; }
+    .d-sub { margin:10px 0 4px; color:var(--muted); font-size:11px; font-weight:750; letter-spacing:.08em; }
+    .oracle-table { width:100%; border:1px solid var(--line); border-radius:8px; table-layout:fixed; }
+    .oracle-table th,.oracle-table td { padding:6px 8px; font-size:12px; }
+    .oracle-table th { position:static; }
+    .oracle-table tbody td:first-child { position:static; box-shadow:none; }
+    .oracle-table td.miss,.oracle-table .miss { color:var(--high); }
+    .chan { display:inline-block; min-width:30px; padding:1px 6px; border-radius:5px; color:white; font-size:10px; font-weight:800; text-align:center; letter-spacing:.05em; }
+    .chan.ui { background:#4f46e5; } .chan.api { background:#0e7490; } .chan.db { background:#b45309; } .chan.log { background:#64748b; }
+    .timeline { display:grid; gap:6px; }
+    .timeline > div { padding:8px 10px; border-left:3px solid var(--wire); border-radius:0 8px 8px 0; background:var(--surface); }
+    .timeline b { display:block; margin-bottom:2px; color:var(--accent); font-size:11px; letter-spacing:.06em; }
+    .timeline .rb { border-left-color:var(--high); }
+    details.raw { margin-top:8px; }
+    details.raw summary { cursor:pointer; color:var(--muted); font-size:12px; }
+    .type-dot { display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:99px; vertical-align:middle; }
+    .type-dot.happy { background:#15803d; } .type-dot.boundary { background:#a16207; } .type-dot.negative { background:#b91c1c; } .type-dot.auth { background:#7c3aed; }
+    .type-dot.state { background:#0e7490; } .type-dot.txn { background:#b45309; } .type-dot.concurrent { background:#be185d; } .type-dot.integration { background:#1d4ed8; }
+
+    @media (min-width:1280px) { body.drawer-open main { padding-right:560px; } }
+    @media (max-width:820px) {
+      .appbar { align-items:flex-start; flex-wrap:wrap; }
+      .appbar .meta,.nav-label { display:none; }
+      .actions { width:100%; margin:0; }
+      main { padding:6px 10px 24px; }
+      nav { padding-inline:10px; }
+      .entity { width:min(420px,calc(100vw - 90px)); }
+      .issue-grid { grid-template-columns:1fr; }
+    }
+    @media print {
+      body { background:white; }
+      .topbar,.status-area,.toasts,.drawer,.hover-card,.toolbar-actions { display:none !important; }
+      .panel { border:0; box-shadow:none; }
+      .scroller { max-height:none !important; overflow:visible; border:0; }
+      .branch.collapsed > .map-children,.node.collapsed > .tree-children { display:flex !important; }
+      .issue-grid { grid-template-columns:1fr; }
+      .issue-card { break-inside:avoid; }
+    }
+  </style>
+</head>
+<body>
+  <section id="emptyState" class="empty-state">
+    <div class="card">
+      <h1>spec-to-tests Viewer</h1>
+      <p>載入 <code>testcases.json</code> 檢視需求追溯、UI 覆蓋與待確認清單</p>
+      <button id="openEmpty" class="primary">載入 JSON</button>
+      <div class="hint muted">也可以直接把檔案拖進這個視窗。以 http 提供時可用 <code>?src=路徑</code> 自動載入。</div>
+    </div>
+  </section>
+
+  <div id="app" class="app hidden">
+    <div id="topbar" class="topbar">
+      <div class="appbar">
+        <h1>spec-to-tests</h1>
+        <span id="fileMeta" class="meta"></span>
+        <div class="nav-history">
+          <button id="navBack" class="icon-button" aria-label="上一動" title="上一動 (Alt+←)">
+            <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <button id="navForward" class="icon-button" aria-label="下一動" title="下一動 (Alt+→)">
+            <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+        <span id="navLabel" class="nav-label"></span>
+        <div class="actions">
+          <input id="search" class="hidden" type="search" placeholder="搜尋目前頁籤（/）" aria-label="搜尋目前頁籤">
+          <button id="searchToggle" class="icon-button" aria-label="開啟搜尋" title="搜尋 (/)">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          </button>
+          <button id="openFile">載入 JSON</button>
+          <button id="reconnect" class="hidden">重新授權</button>
+          <input id="fileInput" type="file" accept="application/json,.json">
+          <button id="helpToggle" class="icon-button" aria-label="快捷鍵說明" title="快捷鍵說明 (?)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 115 .5c0 1.5-2.5 2-2.5 3.5"/><path d="M12 17.2v.1"/></svg>
+          </button>
+        </div>
+      </div>
+      <nav id="tabs"></nav>
+    </div>
+    <main><section id="content" class="panel"></section></main>
+  </div>
+
+  <aside id="drawer" class="drawer" aria-label="明細">
+    <div class="drawer-head">
+      <span id="drawerKind" class="kind"></span>
+      <span id="drawerId" class="did"></span>
+      <span class="spacer"></span>
+      <button id="drawerLocate" title="切到 RTM 並定位這一筆">在 RTM 中定位</button>
+      <button id="drawerClose" class="icon-button" aria-label="關閉明細" title="關閉 (Esc)">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="drawerBody" class="drawer-body"></div>
+  </aside>
+
+  <div id="hoverCard" class="hover-card hidden" aria-hidden="true"></div>
+
+  <div id="statusArea" class="status-area hidden">
+    <aside id="findingsDrawer" class="findings-drawer hidden" aria-live="polite"></aside>
+    <button id="statusPill" class="status-pill">資料檢查</button>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="dropzone" class="dropzone hidden">放開以載入 JSON</div>
+
+  <div id="helpBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal">
+      <h2 id="helpTitle">操作說明</h2>
+      <p class="muted">唯讀檢視器。要修改內容請改回 <code>testcases.json</code>，完整校驗請跑 <code>scripts/check.py</code>。</p>
+      <div class="shortcut-list">
+        <code>1 – 7</code><span>切換頁籤</span>
+        <code>/</code><span>搜尋目前頁籤</span>
+        <code>Alt + ← / →</code><span>上一動 / 下一動</span>
+        <code>Esc</code><span>關閉明細、搜尋或說明</span>
+        <code>?</code><span>開關這份說明</span>
+      </div>
+      <div class="shortcut-list">
+        <code>點任一 ID</code><span>開啟右側明細抽屜</span>
+        <code>點節點左側箭頭</code><span>展開 / 收合子節點</span>
+        <code>拖曳表頭邊界</code><span>調整欄寬，雙擊還原</span>
+        <code>點 UI Coverage 格子</code><span>看該面向的需求 → 驗收條件 → 測試案例</span>
+      </div>
+      <div class="modal-actions"><button id="helpClose" class="primary">關閉</button></div>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    /* ========== 結構定義（對應 references/schema.md） ========== */
+    const VIEWS = [["rtm","RTM"],["ui","UI Coverage"],["tests","Test Cases"],["criteria","Criteria"],["requirements","Requirements"],["docs","Docs"],["issues","Issues"]];
+    const VIEW_LABELS = Object.fromEntries(VIEWS);
+    const COLLECTIONS = ["docs","uiControls","requirements","criteria","tests","issues"];
+    const KIND_OF = {docs:"DOC",uiControls:"UI",requirements:"REQ",criteria:"AC",tests:"TC",issues:"ISS"};
+    const COLLECTION_OF = {DOC:"docs",UI:"uiControls",REQ:"requirements",AC:"criteria",TC:"tests",ISS:"issues"};
+    const UI_ASPECTS = ["visibility","editability","required","length","format","default","options","cascade","persistence","version","case-type","data-type"];
+    const UI_ASPECT_LABELS = {visibility:"顯示",editability:"編輯",required:"必填",length:"長度",format:"格式",default:"預設",options:"選項",cascade:"連動",persistence:"回填",version:"版本","case-type":"案型","data-type":"型態"};
+    const UI_STATUSES = ["specified","not-applicable","issue"];
+    const UI_COMPONENTS = ["input","textarea","select","multi-select","radio","checkbox","date-picker","button","table","display-only"];
+    const UI_FIELD_RE = /^[A-Za-z][A-Za-z0-9_]*$/;
+    const TESTS_COMPACT_FIELDS = ["id","ac","title","type","risk","from"];
+    const TAB_COLLECTION = {tests:"tests",criteria:"criteria",requirements:"requirements",docs:"docs",issues:"issues"};
+    const BASE_FIELDS = {
+      docs:["id","type","path"],
+      uiControls:["id","field","label","page","section","component","src"],
+      requirements:["id","text","target","src","from"],
+      criteria:["id","req","given","when","then","blocked","src","from"],
+      tests:["id","ac","title","type","setup","steps","expected","automation","risk","from"],
+      issues:["id","type","category","owner","text","impact","unblockConditions","rerunConditions","docs","refs","from"]
+    };
+    const RTM_FIELDS = ["id","text","criteriaCount","testCount","blockedCount","src"];
+    const DOC_TYPES = ["BIBLE","PRD","SRS","OTHER"];
+    const TEST_TYPES = ["happy","boundary","negative","auth","state","txn","concurrent","integration"];
+    const ISSUE_TYPES = ["CONFLICT","PENDING","AMBIGUOUS","UNVERIFIABLE","GAP"];
+    const ISSUE_CATEGORIES = ["SPEC_BLOCKED","DATA_BLOCKED","ENV_BLOCKED","DEPENDENCY_BLOCKED","AUTOMATION_BLOCKED"];
+    const OWNERS = ["PM","SA","RD","QA","OPS"];
+    const RISK_MATRIX = {"High|High":"High","High|Low":"Medium","Low|High":"Medium","Low|Low":"Low"};
+    const RISK_LEVELS = ["High","Medium","Low"];
+    const ID_RE = /^STT-(DOC|UI|REQ|AC|TC|ISS)-\d{3,}$/;
+    const SRC_RE = /^(STT-DOC-\d{3,})#(.+)$/;
+    const ISSUE_RANK = {CONFLICT:5,AMBIGUOUS:4,UNVERIFIABLE:3,PENDING:2,GAP:1};
+    const RISK_RANK = {High:3,Medium:2,Low:1};
+    const CHANGE_RANK = {REMOVED:4,MODIFIED:3,ADDED:2,UNCHANGED:1};
+    const CHANGE_VALUES = ["ADDED","MODIFIED","REMOVED","UNCHANGED"];
+    const RTM_MODES = [["map","心智圖"],["tree","樹狀"],["table","表格"]];
+    const DEFAULT_WIDTHS = {
+      id:132,type:120,path:280,text:420,src:250,from:110,req:120,ac:120,given:300,when:300,then:340,
+      blocked:130,title:320,target:240,setup:300,steps:360,expected:340,automation:360,risk:260,
+      category:190,owner:90,impact:280,unblockConditions:300,rerunConditions:300,docs:130,refs:130,
+      change:110,changed:150,criteriaCount:96,testCount:96,blockedCount:96
+    };
+    const SORTABLE = {
+      docs:{id:"text",type:"text",path:"text"},
+      requirements:{id:"text",text:"text",from:"text",change:"change"},
+      criteria:{id:"text",when:"text",then:"text",from:"text",change:"change"},
+      tests:{id:"text",title:"text",type:"text",risk:"risk",from:"text",change:"change"},
+      issues:{id:"text",type:"issue",owner:"text"},
+      rtm:{id:"text",text:"text",criteriaCount:"number",testCount:"number",blockedCount:"number"}
+    };
+    const HOVER_FIELDS = {
+      uiControls:["label","section","component"],
+      requirements:["text","src"],
+      criteria:["given","when","then","blocked"],
+      tests:["title","type","risk"],
+      docs:["type","path"],
+      issues:["type","owner","text"]
+    };
+    const WIDTH_KEY = "stt-viewer-widths";
+    const DENSITY_KEY = "stt-viewer-density";
+
+    /* ========== 狀態 ========== */
+    let data = null;
+    let fileLabel = "";
+    let currentHandle = null;
+    let idIndex = new Map();
+    let findings = {errors:[],warnings:[],coverage:{}};
+    let hasChange = false;
+    let activeView = "rtm";
+    let selectedId = null;
+    let rtmMode = "map";
+    let rtmGapOnly = false;
+    let collapsedNodes = new Set();
+    let navStack = [];
+    let navPos = -1;
+    let columnWidths = readStoredWidths();
+    let suppressSort = false;
+    let hoverShowTimer = null;
+    let hoverHideTimer = null;
+    let dragDepth = 0;
+    const sortState = {};
+    const riskFilter = new Set();
+    const typeFilter = new Set();
+    const docFilter = new Set();
+    const issueTypeFilter = new Set();
+    const issueOwnerFilter = new Set();
+    let issueFromOnly = false;
+    const uiSectionFilter = new Set();
+    const uiComponentFilter = new Set();
+    let uiGapOnly = false;
+    let uiIssueOnly = false;
+    let showRemoved = false;
+    let testsCompact = readStoredDensity();
+    let focusAspect = null;
+
+    const el = id => document.getElementById(id);
+    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[ch]);
+    const asList = value => Array.isArray(value) ? value : [];
+    const isLocalhost = ["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+    const kindOfId = id => (String(id ?? "").match(ID_RE) || [])[1] || null;
+    const isLive = record => record.change !== "REMOVED";
+
+    function fieldsFor(collection) {
+      const base = collection === "tests" && testsCompact ? TESTS_COMPACT_FIELDS : BASE_FIELDS[collection];
+      return hasChange ? [...base,"change","changed"] : base;
+    }
+
+    function readStoredDensity() {
+      try { return localStorage.getItem(DENSITY_KEY) !== "full"; } catch (error) { return true; }
+    }
+
+    function storeDensity() {
+      try { localStorage.setItem(DENSITY_KEY, testsCompact ? "compact" : "full"); } catch (error) { /* 無法使用 storage */ }
+    }
+
+    function labelOf(record, collection) {
+      if (!record) return "";
+      if (collection === "docs") return record.path;
+      if (collection === "requirements") return record.text;
+      if (collection === "uiControls") return `${record.label ?? ""}（${record.field ?? "?"}）`;
+      if (collection === "criteria") return record.then;
+      if (collection === "tests") return record.title;
+      if (collection === "issues") return record.text;
+      return record.id;
+    }
+
+    function recordFor(id) {
+      return idIndex.get(String(id)) || null;
+    }
+
+    function groupBy(rows, keysOf) {
+      const map = new Map();
+      for (const row of rows) for (const key of keysOf(row)) {
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(row);
+      }
+      return map;
+    }
+
+    /* ========== 輕量檢查（完整校驗仍由 scripts/check.py 負責） ========== */
+    function finding(code, message, ids = []) {
+      return {code, message, ids:[...new Set(ids.filter(Boolean).map(String))]};
+    }
+
+    function validate(value) {
+      const errors = [], warnings = [];
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return {errors:[finding("ROOT_TYPE","根層必須是物件")], warnings:[], coverage:{}};
+      }
+      for (const name of COLLECTIONS) {
+        if (!(name in value)) errors.push(finding("ROOT_MISSING", `根層缺少 ${name}`));
+        else if (!Array.isArray(value[name])) errors.push(finding("COLLECTION_TYPE", `${name} 必須是陣列`));
+      }
+      const ids = {};
+      for (const name of COLLECTIONS) {
+        const seen = new Set();
+        ids[name] = seen;
+        for (const record of asList(value[name])) {
+          if (!record || typeof record !== "object") { errors.push(finding("RECORD_TYPE", `${name} 含非物件項目`)); continue; }
+          const id = String(record.id ?? "");
+          const kind = kindOfId(id);
+          if (!kind) errors.push(finding("ID_FORMAT", `${name} 出現不合格式的 id「${id || "(空)"}」`, [id]));
+          else if (kind !== KIND_OF[name]) errors.push(finding("ID_KIND", `${id} 出現在 ${name}，KIND 應為 ${KIND_OF[name]}`, [id]));
+          if (seen.has(id)) errors.push(finding("ID_DUPLICATE", `${id} 重複`, [id]));
+          seen.add(id);
+        }
+      }
+      const all = new Set([...ids.docs, ...ids.uiControls, ...ids.requirements, ...ids.criteria, ...ids.tests, ...ids.issues]);
+      const checkRefs = (record, field, valid, label) => {
+        for (const ref of asList(record[field])) {
+          if (!valid.has(String(ref))) errors.push(finding("REF_MISSING", `${record.id} 的 ${field} 指向不存在的${label} ${ref}`, [record.id, ref]));
+        }
+      };
+      const checkSrc = record => {
+        for (const item of asList(record.src)) {
+          const match = SRC_RE.exec(String(item));
+          if (!match) errors.push(finding("SRC_FORMAT", `${record.id} 的 src「${item}」不符合 STT-DOC-NNN#章節`, [record.id]));
+          else if (!ids.docs.has(match[1])) errors.push(finding("SRC_MISSING_DOC", `${record.id} 的 src 指向不存在的文件 ${match[1]}`, [record.id, match[1]]));
+        }
+      };
+      for (const record of asList(value.requirements)) {
+        if (!record || typeof record !== "object") continue;
+        checkSrc(record);
+        if (!record.target || typeof record.target !== "object") errors.push(finding("UI_FIELD_COVERAGE", `${record.id} 缺少 target`, [record.id]));
+      }
+      for (const record of asList(value.criteria)) {
+        if (!record || typeof record !== "object") continue;
+        checkRefs(record, "req", ids.requirements, "需求");
+        checkRefs(record, "blocked", ids.issues, "待確認事項");
+        checkSrc(record);
+      }
+      for (const record of asList(value.docs)) {
+        if (!record || typeof record !== "object") continue;
+        if (!Array.isArray(record.sections) || !record.sections.length) errors.push(finding("SOURCE_SECTION_MISSING", `${record.id} 缺少 sections`, [record.id]));
+      }
+      for (const record of asList(value.tests)) {
+        if (!record || typeof record !== "object") continue;
+        checkRefs(record, "ac", ids.criteria, "驗收條件");
+        if (!record.automation || typeof record.automation !== "object") errors.push(finding("EXECUTION_CONTRACT_MISSING", `${record.id} 缺少 automation`, [record.id]));
+        const risk = record.risk;
+        if (!risk || typeof risk !== "object") errors.push(finding("RISK_MISSING", `${record.id} 缺少 risk 物件`, [record.id]));
+        else {
+          const expected = RISK_MATRIX[`${risk.impact}|${risk.likelihood}`];
+          if (!expected) errors.push(finding("RISK_AXES", `${record.id} 的 impact／likelihood 必須是 High 或 Low`, [record.id]));
+          else if (risk.level !== expected) errors.push(finding("RISK_LEVEL", `${record.id} 的 level 應為 ${expected}，實際是 ${risk.level}`, [record.id]));
+          if (!String(risk.why ?? "").trim()) errors.push(finding("RISK_WHY", `${record.id} 的 risk.why 不可為空`, [record.id]));
+        }
+      }
+      for (const record of asList(value.issues)) {
+        if (!record || typeof record !== "object") continue;
+        checkRefs(record, "docs", ids.docs, "文件");
+        checkRefs(record, "refs", all, "記錄");
+        if (!OWNERS.includes(record.owner)) errors.push(finding("ISSUE_OWNER", `${record.id} 的 owner「${record.owner}」不在 ${OWNERS.join("／")} 之中`, [record.id]));
+        if (!ISSUE_TYPES.includes(record.type)) errors.push(finding("ISSUE_TYPE", `${record.id} 的 type「${record.type}」不在 ${ISSUE_TYPES.join("／")} 之中`, [record.id]));
+        if (!ISSUE_CATEGORIES.includes(record.category)) errors.push(finding("ISSUE_CATEGORY", `${record.id} 的 category「${record.category}」不合法`, [record.id]));
+      }
+      const tagged = [], untagged = [];
+      for (const name of COLLECTIONS) for (const record of asList(value[name])) {
+        if (!record || typeof record !== "object") continue;
+        (record.change === undefined ? untagged : tagged).push(record.id);
+        if (record.change !== undefined && !CHANGE_VALUES.includes(record.change)) {
+          errors.push(finding("CHANGE_VALUE", `${record.id} 的 change「${record.change}」不在 ${CHANGE_VALUES.join("／")} 之中`, [record.id]));
+        }
+      }
+      if (tagged.length && untagged.length) errors.push(finding("CHANGE_PARTIAL", `change 只標了一部分：${tagged.length} 筆有、${untagged.length} 筆沒有`));
+
+      const liveReqs = asList(value.requirements).filter(r => r && isLive(r));
+      const liveAcs = asList(value.criteria).filter(r => r && isLive(r));
+      const liveTests = asList(value.tests).filter(r => r && isLive(r));
+      const reqsWithAc = new Set(liveAcs.flatMap(c => asList(c.req)));
+      const acsWithTest = new Set(liveTests.flatMap(t => asList(t.ac)));
+      const blockedAcs = liveAcs.filter(c => asList(c.blocked).length);
+      for (const record of liveReqs) if (!reqsWithAc.has(record.id)) warnings.push(finding("REQ_UNCOVERED", `${record.id} 沒有任何驗收條件`, [record.id]));
+      for (const record of liveAcs) {
+        if (asList(record.blocked).length || acsWithTest.has(record.id)) continue;
+        warnings.push(finding("AC_UNCOVERED", `${record.id} 沒有任何測試案例（若被 issue 擋住請填 blocked）`, [record.id]));
+      }
+      /* ---- UI control inventory ---- */
+      const reqById = new Map(asList(value.requirements).filter(r => r && typeof r === "object").map(r => [String(r.id), r]));
+      const liveReqIds = new Set(liveReqs.map(r => String(r.id)));
+      const acsByReq = groupBy(liveAcs, ac => asList(ac.req).map(String));
+      const testsByAc = groupBy(liveTests, t => asList(t.ac).map(String));
+      const uiFields = new Map();
+      const liveControls = asList(value.uiControls).filter(r => r && typeof r === "object" && isLive(r));
+      let uiSpecified = 0, uiGaps = 0;
+      for (const record of liveControls) {
+        if (typeof record.field === "string" && !UI_FIELD_RE.test(record.field)) errors.push(finding("UI_TARGET_COMPOSITE", `${record.id} 的 field「${record.field}」不是單一欄位名；一筆只能代表一個實體 control`, [record.id]));
+        if (typeof record.field === "string") uiFields.set(record.field, record);
+        if (!UI_COMPONENTS.includes(record.component)) errors.push(finding("UI_COMPONENT", `${record.id} 的 component「${record.component}」不合法`, [record.id]));
+        checkSrc(record);
+        const aspects = record.aspects && typeof record.aspects === "object" ? record.aspects : null;
+        if (!aspects) { errors.push(finding("UI_ASPECT_UNACCOUNTED", `${record.id} 缺少 aspects；十二個規則面向每格都要有結論`, [record.id])); continue; }
+        const missing = UI_ASPECTS.filter(a => !aspects[a] || typeof aspects[a] !== "object" || !UI_STATUSES.includes(aspects[a].status));
+        if (missing.length) errors.push(finding("UI_ASPECT_UNACCOUNTED", `${record.id} 有 ${missing.length} 個面向沒有結論：${missing.join("、")}`, [record.id]));
+        for (const aspect of UI_ASPECTS) {
+          const cell = aspects[aspect];
+          if (!cell || typeof cell !== "object" || !UI_STATUSES.includes(cell.status)) continue;
+          const refs = asList(cell.refs).map(String);
+          if (cell.status === "specified") {
+            uiSpecified++;
+            const reqRefs = refs.filter(ref => ids.requirements.has(ref));
+            if (!reqRefs.length) errors.push(finding("UI_REQUIREMENT_MISSING", `${record.id}.${aspect} 標為 specified 卻沒有指向任何需求`, [record.id]));
+            for (const ref of reqRefs) {
+              const target = reqById.get(ref)?.target || {};
+              if (target.kind !== "ui-field" || target.name !== record.field || target.aspect !== aspect) errors.push(finding("UI_REQUIREMENT_MISMATCH", `${record.id}.${aspect} 指向 ${ref}，但該需求的 target 是 ${target.kind}/${target.name}/${target.aspect}`, [record.id, ref]));
+            }
+            const acs = reqRefs.filter(ref => liveReqIds.has(ref)).flatMap(ref => acsByReq.get(ref) || []);
+            const open = acs.filter(ac => !asList(ac.blocked).length);
+            const tests = open.flatMap(ac => testsByAc.get(String(ac.id)) || []);
+            if (!(acs.length && !open.length) && !tests.length) uiGaps++;
+          } else if (cell.status === "not-applicable") {
+            if (!String(cell.reason ?? "").trim()) errors.push(finding("UI_NA_REASON_MISSING", `${record.id}.${aspect} 標為 not-applicable 但沒有 reason`, [record.id]));
+          } else if (!refs.some(ref => ids.issues.has(ref))) errors.push(finding("UI_ISSUE_REF_MISSING", `${record.id}.${aspect} 標為 issue 卻沒有指向任何待確認事項`, [record.id]));
+        }
+      }
+      const uiFieldReqs = liveReqs.filter(r => r.target?.kind === "ui-field");
+      if (uiFields.size) {
+        for (const record of uiFieldReqs) if (!uiFields.has(record.target.name)) errors.push(finding("UI_TARGET_COMPOSITE", `${record.id} 的 target.name「${record.target.name}」不是 uiControls 裡任何一個 field`, [record.id]));
+      } else if (uiFieldReqs.length) {
+        warnings.push(finding("UI_INVENTORY_MISSING", `有 ${uiFieldReqs.length} 條 ui-field 需求，但 uiControls 是空的；有前端 SRS 就要先盤點 inventory，check.py 會報錯`, uiFieldReqs.slice(0, 3).map(r => r.id)));
+      }
+
+      const coverage = {
+        docs: asList(value.docs).filter(r => r && isLive(r)).length,
+        uiControls: liveControls.length,
+        uiSpecified,
+        uiGaps,
+        requirements: liveReqs.length,
+        criteria: liveAcs.length,
+        tests: liveTests.length,
+        issues: asList(value.issues).filter(r => r && isLive(r)).length,
+        reqsWithoutAc: liveReqs.filter(r => !reqsWithAc.has(r.id)).length,
+        acsWithoutTest: liveAcs.filter(c => !asList(c.blocked).length && !acsWithTest.has(c.id)).length,
+        blocked: blockedAcs.length
+      };
+      return {errors, warnings, coverage};
+    }
+
+    /* ========== 載入資料 ========== */
+    function setData(value, handle = null, label = "") {
+      data = value;
+      currentHandle = handle;
+      fileLabel = label || fileLabel;
+      hasChange = COLLECTIONS.some(name => asList(value?.[name]).some(record => record && record.change !== undefined));
+      findings = validate(data);
+      buildIdIndex();
+      for (const key of Object.keys(sortState)) delete sortState[key];
+      riskFilter.clear(); typeFilter.clear(); docFilter.clear();
+      issueTypeFilter.clear(); issueOwnerFilter.clear();
+      issueFromOnly = false; criteriaBlockedOnly = false; rtmGapOnly = false; rtmMode = "map";
+      uiSectionFilter.clear(); uiComponentFilter.clear(); uiGapOnly = false; uiIssueOnly = false; showRemoved = false; focusAspect = null;
+      collapsedNodes = new Set(asList(data?.criteria).map(item => String(item.id)));
+      navStack = []; navPos = -1;
+      const target = parseHash();
+      activeView = target.view || "rtm";
+      selectedId = null;
+      render();
+      pushNav(activeView, target.id, true);
+      if (target.id) openDetail(target.id, {push:false, locate:activeView === "rtm" || activeView === "ui"});
+      toast(`已載入 ${escapeHtml(fileLabel || "JSON")}`);
+    }
+
+    function buildIdIndex() {
+      idIndex = new Map();
+      for (const name of COLLECTIONS) for (const record of asList(data?.[name])) {
+        if (record && record.id !== undefined) idIndex.set(String(record.id), {collection:name, record});
+      }
+    }
+
+    /* ========== 導覽紀錄 ========== */
+    function parseHash() {
+      const raw = decodeURIComponent(location.hash.replace(/^#/, ""));
+      if (!raw) return {view:null, id:null};
+      const [first, second] = raw.split("/");
+      if (second) return {view:VIEW_LABELS[first] ? first : null, id:second};
+      if (VIEW_LABELS[first]) return {view:first, id:null};
+      return {view:null, id:first};
+    }
+
+    const hashFor = entry => `#${encodeURIComponent(entry.view)}${entry.id ? `/${encodeURIComponent(entry.id)}` : ""}`;
+    const currentNav = () => navStack[navPos] || null;
+
+    function pushNav(view, id = null, replace = false) {
+      const entry = {view, id:id || null};
+      const current = currentNav();
+      if (current && current.view === entry.view && current.id === entry.id) { syncHash(entry, true); return; }
+      if (replace && current) { navStack[navPos] = entry; syncHash(entry, true); updateNavButtons(); return; }
+      navStack = navStack.slice(0, navPos + 1);
+      navStack.push(entry);
+      navPos = navStack.length - 1;
+      if (navStack.length > 120) { navStack.shift(); navPos--; }
+      syncHash(entry, navStack.length === 1 || replace);
+      updateNavButtons();
+    }
+
+    function syncHash(entry, replace = false) {
+      const url = hashFor(entry);
+      if (replace) history.replaceState({navPos}, "", url); else history.pushState({navPos}, "", url);
+    }
+
+    function travel(delta) {
+      const target = navPos + delta;
+      if (target < 0 || target >= navStack.length) return;
+      navPos = target;
+      applyNav(navStack[navPos]);
+      history.replaceState({navPos}, "", hashFor(navStack[navPos]));
+    }
+
+    function applyNav(entry) {
+      if (!entry) return;
+      activeView = entry.view;
+      el("search").value = "";
+      if (entry.id) {
+        if (activeView === "rtm") expandAncestors(entry.id);
+        selectedId = entry.id;
+      } else {
+        selectedId = null;
+      }
+      render();
+      if (entry.id) { renderDrawer(); highlight(entry.id); } else closeDrawer(false);
+      updateNavButtons();
+    }
+
+    const navDescription = entry => entry ? `${VIEW_LABELS[entry.view] || entry.view}${entry.id ? ` · ${entry.id}` : ""}` : "";
+
+    function updateNavButtons() {
+      const back = navStack[navPos - 1], forward = navStack[navPos + 1];
+      el("navBack").disabled = !back;
+      el("navForward").disabled = !forward;
+      el("navBack").title = back ? `上一動：${navDescription(back)} (Alt+←)` : "沒有上一動 (Alt+←)";
+      el("navForward").title = forward ? `下一動：${navDescription(forward)} (Alt+→)` : "沒有下一動 (Alt+→)";
+      const current = currentNav();
+      el("navLabel").textContent = current && current.id ? navDescription(current) : "";
+      el("navLabel").title = el("navLabel").textContent;
+    }
+
+    /* ========== 外框 ========== */
+    function render() {
+      const loaded = Boolean(data);
+      el("emptyState").classList.toggle("hidden", loaded);
+      el("app").classList.toggle("hidden", !loaded);
+      el("statusArea").classList.toggle("hidden", !loaded);
+      if (!loaded) return;
+      const live = name => asList(data[name]).filter(record => record && isLive(record)).length;
+      const counts = {rtm:live("requirements"), ui:live("uiControls"), tests:live("tests"), criteria:live("criteria"),
+                      requirements:live("requirements"), docs:live("docs"), issues:live("issues")};
+      el("fileMeta").textContent = [data.project, fileLabel, data.generatedAt, data.baseline ? `baseline ${data.baseline}` : ""].filter(Boolean).join(" · ");
+      el("fileMeta").title = el("fileMeta").textContent;
+      el("tabs").innerHTML = VIEWS.map(([id, label], index) =>
+        `<button data-view="${id}" title="${label} (${index + 1})" class="${id === activeView ? "active" : ""}">${label}<span class="tab-count">${counts[id] ?? 0}</span></button>`).join("");
+      for (const button of el("tabs").querySelectorAll("[data-view]")) button.onclick = () => switchView(button.dataset.view);
+      renderStatus();
+      renderView();
+      updateNavButtons();
+    }
+
+    function switchView(view) {
+      if (view === activeView) return;
+      activeView = view;
+      el("search").value = "";
+      render();
+      pushNav(view, null);
+    }
+
+    function renderStatus() {
+      const {errors, warnings} = findings;
+      const pill = el("statusPill");
+      pill.textContent = errors.length ? `資料檢查 · ${errors.length} 錯誤` : (warnings.length ? `資料檢查 · ${warnings.length} 警告` : "資料檢查 · 通過");
+      pill.className = `status-pill ${errors.length ? "invalid" : warnings.length ? "warn" : "valid"}`;
+      const all = [...errors.map(item => ({...item, severity:"error"})), ...warnings.map(item => ({...item, severity:"warning"}))];
+      el("findingsDrawer").innerHTML = `<h2>資料檢查</h2>${all.length
+        ? all.map(item => `<div class="finding ${item.severity}"><code>${escapeHtml(item.code)}</code><div>${escapeHtml(item.message)}</div><div class="chips">${item.ids.map(renderIdLink).join("")}</div></div>`).join("")
+        : `<p class="muted">沒有發現參照或覆蓋率問題。</p>`}
+        <div class="findings-foot">這裡只檢查參照、UI inventory 結構與覆蓋率。來源 SRS 比對、樣板句與展開比例請跑 <code>python3 scripts/check.py testcases.json</code>。</div>`;
+      bindIdLinks(el("findingsDrawer"));
+    }
+
+    /* ========== 篩選與排序 ========== */
+    let criteriaBlockedOnly = false;
+
+    const searchQuery = () => el("search").value.trim().toLowerCase();
+    const matchesQuery = (value, query) => !query || JSON.stringify(value ?? "").toLowerCase().includes(query);
+    const srcDocIds = record => asList(record.src).map(item => (SRC_RE.exec(String(item)) || [])[1]).filter(Boolean);
+    const matchesDocFilter = record => !docFilter.size || srcDocIds(record).some(id => docFilter.has(id));
+
+    function passesFilters(collection, row) {
+      if (collection === "tests") {
+        if (riskFilter.size && !riskFilter.has(row.risk?.level)) return false;
+        if (typeFilter.size && !typeFilter.has(row.type)) return false;
+        return true;
+      }
+      if (collection === "criteria") {
+        if (criteriaBlockedOnly && !asList(row.blocked).length) return false;
+        return matchesDocFilter(row);
+      }
+      if (collection === "requirements") return matchesDocFilter(row);
+      return true;
+    }
+
+    function sortValue(row, field, kind) {
+      if (kind === "risk") return RISK_RANK[row.risk?.level] ?? 0;
+      if (kind === "issue") return ISSUE_RANK[row.type] ?? 0;
+      if (kind === "change") return CHANGE_RANK[row.change] ?? 0;
+      if (kind === "number") return Number(row[field]) || 0;
+      return String(row[field] ?? "");
+    }
+
+    function arrange(rows, viewKey, collection = viewKey) {
+      const query = searchQuery();
+      let selected = rows.filter(row => passesFilters(collection, row));
+      if (query) selected = selected.filter(row => matchesQuery(row, query));
+      const state = sortState[viewKey];
+      if (state) {
+        const kind = (SORTABLE[viewKey] || {})[state.field] || "text";
+        selected = [...selected].sort((left, right) => {
+          const a = sortValue(left, state.field, kind), b = sortValue(right, state.field, kind);
+          const result = typeof a === "number" ? a - b : a.localeCompare(b, "zh-Hant", {numeric:true});
+          return result * state.dir;
+        });
+      }
+      return selected;
+    }
+
+    function cycleSort(viewKey, field) {
+      const state = sortState[viewKey];
+      if (!state || state.field !== field) sortState[viewKey] = {field, dir:1};
+      else if (state.dir === 1) sortState[viewKey] = {field, dir:-1};
+      else delete sortState[viewKey];
+      renderView();
+    }
+
+    function readStoredWidths() {
+      try { return JSON.parse(localStorage.getItem(WIDTH_KEY) || "{}") || {}; } catch (error) { return {}; }
+    }
+
+    function storeWidths() {
+      try { localStorage.setItem(WIDTH_KEY, JSON.stringify(columnWidths)); } catch (error) { /* 無法使用 storage */ }
+    }
+
+    const columnWidth = (viewKey, field) => columnWidths[viewKey]?.[field] ?? DEFAULT_WIDTHS[field] ?? 200;
+
+    /* ========== 值的呈現 ========== */
+    function renderIdLink(id) {
+      const text = String(id ?? "");
+      if (idIndex.has(text)) return `<button class="id-link" data-target-id="${escapeHtml(text)}">${escapeHtml(text)}</button>`;
+      if (/^STT-/.test(text)) return `<span class="missing-id" title="找不到這個 ID">${escapeHtml(text)}</span>`;
+      return escapeHtml(text);
+    }
+
+    function renderSrc(item) {
+      const match = SRC_RE.exec(String(item));
+      if (!match) return `<span class="src-chip missing-id">${escapeHtml(item)}</span>`;
+      const doc = recordFor(match[1]);
+      const path = doc ? doc.record.path : match[1];
+      return `<span class="src-chip" title="${escapeHtml(`${path} # ${match[2]}`)}"><b>${escapeHtml(match[1].replace("STT-", ""))}</b> ${escapeHtml(match[2])}</span>`;
+    }
+
+    function renderRisk(risk, compact = false) {
+      if (!risk) return "";
+      const head = `<div><span class="badge ${escapeHtml(risk.level)}">${escapeHtml(risk.level)}</span> <span class="muted">I:${escapeHtml(risk.impact)} / L:${escapeHtml(risk.likelihood)}</span></div>`;
+      return compact ? `<div title="${escapeHtml(risk.why ?? "")}">${head}</div>` : head + `<div class="muted clamp">${escapeHtml(risk.why)}</div>`;
+    }
+
+    function renderObject(value, compact = true) {
+      return `<pre class="${compact ? "clamp" : ""}" style="white-space:pre-wrap;margin:0">${escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
+    }
+
+    function renderCell(value, field, collection) {
+      if (value === undefined || value === null || value === "") return "";
+      if (field === "id") return renderIdLink(value);
+      if (field === "risk") return renderRisk(value, collection === "tests" && testsCompact);
+      if (["target","automation"].includes(field)) return renderObject(value);
+      if (field === "from") return `<span class="from-chip" title="來源文件的原始編號">${escapeHtml(value)}</span>`;
+      if (field === "type") return `<span class="badge ${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+      if (field === "owner") return `<span class="badge owner">${escapeHtml(value)}</span>`;
+      if (field === "change") return `<span class="badge ${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+      if (field === "src") return `<div class="chips">${asList(value).map(renderSrc).join("")}</div>`;
+      if (field === "blocked") return asList(value).length
+        ? `<div class="chips">${asList(value).map(id => `<span class="blocked-chip">⛔ ${renderIdLink(id)}</span>`).join("")}</div>` : "";
+      if (["req","ac","docs","refs"].includes(field)) return `<div class="chips">${asList(value).map(renderIdLink).join("")}</div>`;
+      if (["setup","steps","expected","changed","unblockConditions","rerunConditions"].includes(field)) return `<ol class="steps clamp">${asList(value).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ol>`;
+      if (Array.isArray(value)) return `<div class="clamp">${value.map(escapeHtml).join("<br>")}</div>`;
+      return `<div class="clamp">${escapeHtml(value)}</div>`;
+    }
+
+    function headerCell(field, viewKey) {
+      const kind = (SORTABLE[viewKey] || {})[field];
+      const state = sortState[viewKey];
+      const active = kind && state && state.field === field;
+      const arrow = kind ? `<span class="arrow">${active ? (state.dir === 1 ? "▲" : "▼") : "↕"}</span>` : "";
+      const attributes = kind ? ` class="sortable${active ? " sorted" : ""}" data-sort-field="${escapeHtml(field)}" title="排序：升冪 → 降冪 → 取消"` : "";
+      return `<th${attributes}>${escapeHtml(field)} ${arrow}<span class="resizer" data-resize-field="${escapeHtml(field)}" title="拖曳調整欄寬，雙擊還原"></span></th>`;
+    }
+
+    function tableHtml(rows, fields, viewKey, collection) {
+      const widths = fields.map(field => columnWidth(viewKey, field));
+      const total = widths.reduce((sum, value) => sum + value, 0);
+      return `<div class="scroller"><table style="width:${total}px;min-width:100%">
+        <colgroup>${widths.map(width => `<col style="width:${width}px">`).join("")}</colgroup>
+        <thead><tr>${fields.map(field => headerCell(field, viewKey)).join("")}</tr></thead>
+        <tbody>${rows.map(row => `<tr data-row-id="${escapeHtml(row.id ?? "")}" class="${row.id === selectedId ? "selected" : ""}">${fields.map(field => `<td>${renderCell(row[field], field, collection)}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table></div>`;
+    }
+
+    function toolbarHtml(total, shown, extra = "") {
+      const state = sortState[activeView];
+      const sortReset = state ? `<button class="mini" data-action="reset-sort">重置排序（${escapeHtml(state.field)} ${state.dir === 1 ? "↑" : "↓"}）</button>` : "";
+      const widthReset = Object.keys(columnWidths[activeView] || {}).length ? `<button class="mini" data-action="reset-widths">重置欄寬</button>` : "";
+      const counter = shown === total ? `${total} 筆` : `${shown} / ${total} 筆`;
+      return `<div class="toolbar"><div class="count">${counter}</div><div class="toolbar-actions">${extra}${sortReset}${widthReset}</div></div>`;
+    }
+
+    const EMPTY_HTML = `<p class="muted">沒有符合條件的資料。</p>`;
+
+    function chipGroup(label, values, active, action, counts = null) {
+      const chips = values.map(value => {
+        const n = counts ? `<span class="n">${counts[value] ?? 0}</span>` : "";
+        return `<button class="mini${active.has(value) ? " on" : ""}" data-action="${action}" data-value="${escapeHtml(value)}">${escapeHtml(value)}${n}</button>`;
+      }).join("");
+      return `<span class="group"><span class="group-label">${escapeHtml(label)}</span>${chips}</span>`;
+    }
+
+    function removedChip(all) {
+      const removed = all.filter(record => record && !isLive(record)).length;
+      if (!removed) return "";
+      return `<button class="mini${showRemoved ? " on" : ""}" data-action="show-removed" title="重跑後標為 REMOVED 的記錄預設不顯示、不計數">含已移除<span class="n">${removed}</span></button>`;
+    }
+
+    function docChips() {
+      const counts = {};
+      for (const record of [...asList(data.requirements), ...asList(data.criteria)].filter(isLive)) {
+        for (const id of new Set(srcDocIds(record))) counts[id] = (counts[id] ?? 0) + 1;
+      }
+      const chips = asList(data.docs).map(doc => `<button class="mini${docFilter.has(doc.id) ? " on" : ""}" data-action="doc-filter" data-value="${escapeHtml(doc.id)}" title="${escapeHtml(doc.path)}">${escapeHtml(doc.id.replace("STT-", ""))} ${escapeHtml(doc.type)}<span class="n">${counts[doc.id] ?? 0}</span></button>`).join("");
+      return `<span class="group"><span class="group-label">文件</span>${chips}</span>`;
+    }
+
+    function countBy(rows, keyOf) {
+      const counts = {};
+      for (const row of rows) { const key = keyOf(row); counts[key] = (counts[key] ?? 0) + 1; }
+      return counts;
+    }
+
+    /* ========== 集合頁籤 ========== */
+    function renderCollectionView(collection) {
+      const all = asList(data[collection]);
+      const rows = showRemoved ? all : all.filter(isLive);
+      const fields = fieldsFor(collection);
+      let extra = "";
+      if (collection === "tests") {
+        extra = `<span class="group"><button class="mini${testsCompact ? " on" : ""}" data-action="tests-density" data-value="compact" title="只列 id、ac、title、type、risk；步驟與預期結果在明細抽屜">精簡</button><button class="mini${testsCompact ? "" : " on"}" data-action="tests-density" data-value="full">完整</button></span>`
+              + chipGroup("Risk", RISK_LEVELS, riskFilter, "risk-filter", countBy(rows, row => row.risk?.level))
+              + chipGroup("Type", TEST_TYPES, typeFilter, "type-filter", countBy(rows, row => row.type));
+      }
+      if (collection === "criteria") {
+        extra = `<button class="mini${criteriaBlockedOnly ? " on" : ""}" data-action="blocked-only" title="只看被 issue 擋住、刻意不展開測試案例的驗收條件">只看被擋住</button>` + docChips();
+      }
+      if (collection === "requirements") extra = docChips();
+      extra += removedChip(all);
+      const selected = arrange(rows, collection);
+      el("content").innerHTML = toolbarHtml(rows.length, selected.length, extra)
+        + (selected.length ? tableHtml(selected, fields, collection, collection) : EMPTY_HTML);
+    }
+
+    /* ========== Issues 頁籤 ========== */
+    function blockedByIssue(issueId) {
+      return asList(data.criteria).filter(record => asList(record.blocked).includes(issueId));
+    }
+
+    function issueCardHtml(issue) {
+      const docs = asList(issue.docs).map(id => {
+        const doc = recordFor(id);
+        return `<span class="src-chip" title="${escapeHtml(doc ? doc.record.path : id)}"><b>${escapeHtml(String(id).replace("STT-", ""))}</b> ${escapeHtml(doc ? doc.record.path : "?")}</span>`;
+      }).join("");
+      const blocks = blockedByIssue(issue.id);
+      const rows = [
+        ["相關文件", docs ? `<div class="chips">${docs}</div>` : ""],
+        ["相關記錄", asList(issue.refs).length ? `<div class="chips">${asList(issue.refs).map(renderIdLink).join("")}</div>` : ""],
+        ["擋住的 AC", blocks.length ? `<div class="chips">${blocks.map(record => `<span class="blocked-chip">⛔ ${renderIdLink(record.id)}</span>`).join("")}</div>` : ""],
+        ["原始編號", issue.from ? `<span class="from-chip">${escapeHtml(issue.from)}</span>` : ""],
+        ["變更", issue.change ? `<span class="badge ${escapeHtml(issue.change)}">${escapeHtml(issue.change)}</span>` : ""]
+      ].filter(([, value]) => value);
+      return `<article class="issue-card ${escapeHtml(issue.type)}" data-row-id="${escapeHtml(issue.id)}">
+        <div class="ihead">
+          <span class="badge ${escapeHtml(issue.type)}">${escapeHtml(issue.type)}</span>
+          <button class="id-link iid" data-target-id="${escapeHtml(issue.id)}">${escapeHtml(issue.id)}</button>
+          <span class="badge owner" title="需要誰去確認">${escapeHtml(issue.owner ?? "?")}</span>
+        </div>
+        <div class="itext">${escapeHtml(issue.text)}</div>
+        <dl class="imeta">${rows.map(([key, value]) => `<dt>${escapeHtml(key)}</dt><dd>${value}</dd>`).join("")}</dl>
+      </article>`;
+    }
+
+    function renderIssuesView() {
+      const all = asList(data.issues);
+      const rows = showRemoved ? all : all.filter(isLive);
+      const query = searchQuery();
+      let selected = rows.filter(issue =>
+        (!issueTypeFilter.size || issueTypeFilter.has(issue.type))
+        && (!issueOwnerFilter.size || issueOwnerFilter.has(issue.owner))
+        && (!issueFromOnly || Boolean(issue.from))
+        && matchesQuery(issue, query));
+      selected = [...selected].sort((left, right) =>
+        (ISSUE_RANK[right.type] ?? 0) - (ISSUE_RANK[left.type] ?? 0)
+        || String(left.id).localeCompare(String(right.id), "zh-Hant", {numeric:true}));
+      const typeCounts = countBy(rows, row => row.type);
+      const ownerCounts = countBy(rows, row => row.owner);
+      const types = ISSUE_TYPES.filter(type => typeCounts[type] || issueTypeFilter.has(type));
+      const owners = OWNERS.filter(owner => ownerCounts[owner] || issueOwnerFilter.has(owner));
+      const extra = chipGroup("類型", types, issueTypeFilter, "issue-type", typeCounts)
+        + chipGroup("負責", owners, issueOwnerFilter, "issue-owner", ownerCounts)
+        + `<button class="mini${issueFromOnly ? " on" : ""}" data-action="issue-from" title="只看文件自己已經列出的待確認項">只看文件已列出</button>`
+        + removedChip(all);
+      const blockedCount = new Set(asList(data.criteria).filter(isLive).flatMap(record => asList(record.blocked))).size;
+      const stats = statsHtml([
+        [rows.length, "待確認事項", false],
+        [blockedCount, "擋住 AC 的 issue", blockedCount > 0 ? "blocked" : false],
+        [findings.coverage.blocked ?? 0, "被擋住的 AC", (findings.coverage.blocked ?? 0) > 0 ? "blocked" : false]
+      ]);
+      el("content").innerHTML = stats + toolbarHtml(rows.length, selected.length, extra)
+        + (selected.length ? `<div class="issue-grid">${selected.map(issueCardHtml).join("")}</div>` : EMPTY_HTML);
+    }
+
+    /* ========== RTM ========== */
+    function statsHtml(tiles) {
+      return `<div class="stats">${tiles.map(tile => {
+        const t = Array.isArray(tile) ? {value:tile[0], label:tile[1], tone:tile[2], action:tile[3]} : tile;
+        const meter = t.meter === undefined ? "" : `<span class="meter"><i style="width:${Math.round(Math.max(0, Math.min(1, t.meter)) * 100)}%"></i></span>`;
+        const hint = t.hint ? `<span class="hint">${escapeHtml(t.hint)}</span>` : "";
+        return `<button class="stat${t.tone ? ` ${t.tone}` : ""}"${t.action ? ` data-action="${t.action}"` : " disabled"}${t.title ? ` title="${escapeHtml(t.title)}"` : ""}><strong>${escapeHtml(t.value)}</strong>${escapeHtml(t.label)}${hint}${meter}</button>`;
+      }).join("")}</div>`;
+    }
+
+    function rtmModel() {
+      const criteria = asList(data.criteria).filter(isLive);
+      const tests = asList(data.tests).filter(isLive);
+      const requirements = asList(data.requirements).filter(isLive);
+      const testsByAc = groupBy(tests, test => asList(test.ac).map(String));
+      const acByReq = groupBy(criteria, item => asList(item.req).map(String));
+      const reqIds = new Set(requirements.map(item => String(item.id)));
+      const acIds = new Set(criteria.map(item => String(item.id)));
+      const branchOf = item => ({ac:item, tests:testsByAc.get(String(item.id)) || [], blocked:asList(item.blocked)});
+      return {
+        entries: requirements.map(req => ({req, branches:(acByReq.get(String(req.id)) || []).map(branchOf)})),
+        orphanAc: criteria.filter(item => !asList(item.req).some(id => reqIds.has(String(id)))).map(branchOf),
+        orphanTc: tests.filter(test => !asList(test.ac).some(id => acIds.has(String(id))))
+      };
+    }
+
+    const hasGap = entry => !entry.branches.length || entry.branches.some(branch => !branch.tests.length);
+
+    function filterRtm(model) {
+      const query = searchQuery();
+      let entries = model.entries;
+      if (docFilter.size) {
+        entries = entries.map(entry => matchesDocFilter(entry.req)
+          ? entry
+          : {...entry, branches:entry.branches.filter(branch => matchesDocFilter(branch.ac))})
+          .filter(entry => matchesDocFilter(entry.req) || entry.branches.length);
+      }
+      if (riskFilter.size || typeFilter.size) {
+        entries = entries.map(entry => ({...entry, branches:entry.branches
+          .map(branch => ({...branch, tests:branch.tests.filter(test => passesFilters("tests", test))}))
+          .filter(branch => branch.tests.length)}))
+          .filter(entry => entry.branches.length);
+      }
+      if (query) {
+        entries = entries.map(entry => {
+          if (matchesQuery(entry.req, query)) return entry;
+          const branches = entry.branches
+            .map(branch => matchesQuery(branch.ac, query) ? branch : {...branch, tests:branch.tests.filter(test => matchesQuery(test, query))})
+            .filter(branch => matchesQuery(branch.ac, query) || branch.tests.length);
+          return {...entry, branches};
+        }).filter(entry => entry.branches.length);
+      }
+      if (rtmGapOnly) entries = entries.filter(hasGap);
+      return entries;
+    }
+
+    const isCollapsed = id => collapsedNodes.has(String(id)) && !searchQuery();
+    const nodeIdLabel = id => String(id).replace(/^STT-[A-Z]+-/, "");
+
+    function entityHtml(kind, id, label, tail, leaf, collapsed, extraClass, kindLabel, prefix = "") {
+      const anchor = id.startsWith("__") ? "" : ` data-open-id="${escapeHtml(id)}" data-hover-id="${escapeHtml(id)}" role="button" tabindex="0"`;
+      const caret = leaf ? "" : `<button class="e-caret${collapsed ? " on" : ""}" data-toggle="${escapeHtml(id)}" aria-label="${collapsed ? "展開" : "收合"}" title="${collapsed ? "展開" : "收合"}">${collapsed ? "▶" : "▼"}</button>`;
+      return `<div class="entity ${kind}${extraClass}${id.startsWith("__") ? " compact" : ""}${id === selectedId ? " selected" : ""}" data-node-id="${escapeHtml(id)}"${anchor} title="${escapeHtml(label)}">
+        <span class="e-kind">${escapeHtml(kindLabel)}</span>
+        ${id.startsWith("__") ? "" : `<span class="e-id">${escapeHtml(nodeIdLabel(id))}</span>`}
+        <span class="e-label">${prefix}${escapeHtml(label)}</span>
+        <span class="e-tail${tail.zero ? " zero" : ""}">${caret}${tail.html}</span>
+      </div>`;
+    }
+
+    function buildNode(mode, kind, id, label, tail, childHtml, extraClass = "", kindLabel = null, prefix = "") {
+      const leaf = !childHtml;
+      const collapsed = !leaf && isCollapsed(id);
+      const entity = entityHtml(kind, String(id), String(label ?? ""), tail, leaf, collapsed, extraClass, kindLabel ?? kind.toUpperCase(), prefix);
+      if (mode === "map") {
+        return `<div class="branch${leaf ? " leaf" : ""}${collapsed ? " collapsed" : ""}">${entity}${leaf ? "" : `<div class="map-children">${childHtml}</div>`}</div>`;
+      }
+      return `<div class="node${collapsed ? " collapsed" : ""}">${entity}${leaf ? "" : `<div class="tree-children">${childHtml}</div>`}</div>`;
+    }
+
+    const countTail = value => ({html:String(value), zero:!value});
+    const riskTail = risk => ({html:risk ? `<span class="dot ${escapeHtml(risk.level)}" title="Risk ${escapeHtml(risk.level)}：${escapeHtml(risk.why ?? "")}"></span>` : "", zero:false});
+
+    const typeDot = type => type ? `<span class="type-dot ${escapeHtml(type)}" title="${escapeHtml(type)}"></span>` : "";
+
+    function testNodes(mode, tests) {
+      return tests.map(test => buildNode(mode, "tc", test.id, test.title, riskTail(test.risk), null, "", null, typeDot(test.type))).join("");
+    }
+
+    function branchNode(mode, branch) {
+      if (branch.blocked.length) {
+        const issues = branch.blocked.map(id => {
+          const issue = recordFor(id);
+          return buildNode(mode, "iss", id, issue ? issue.record.text : "找不到這則待確認事項", {html:"", zero:false}, null);
+        }).join("");
+        return buildNode(mode, "ac", branch.ac.id, branch.ac.then, {html:"⛔", zero:false}, issues, " is-blocked");
+      }
+      return buildNode(mode, "ac", branch.ac.id, branch.ac.then, countTail(branch.tests.length), testNodes(mode, branch.tests) || null);
+    }
+
+    function rtmBranches(mode, entries, model) {
+      let html = entries.map(entry =>
+        buildNode(mode, "req", entry.req.id, entry.req.text, countTail(entry.branches.length),
+          entry.branches.map(branch => branchNode(mode, branch)).join("") || null)).join("");
+      const orphanCount = model.orphanAc.length + model.orphanTc.length;
+      if (orphanCount) {
+        const kids = model.orphanAc.map(branch => branchNode(mode, branch)).join("") + testNodes(mode, model.orphanTc);
+        html += buildNode(mode, "iss", "__orphan", "未歸屬：req／ac 指向不存在的記錄", countTail(orphanCount), kids, "", "缺口");
+      }
+      return html;
+    }
+
+    function rtmRows(entries) {
+      return entries.map(entry => ({
+        id: entry.req.id,
+        text: entry.req.text,
+        src: entry.req.src,
+        criteriaCount: entry.branches.length,
+        testCount: entry.branches.reduce((sum, branch) => sum + branch.tests.length, 0),
+        blockedCount: entry.branches.filter(branch => branch.blocked.length).length
+      }));
+    }
+
+    function renderRtm() {
+      const model = rtmModel();
+      const entries = filterRtm(model);
+      const coverage = findings.coverage;
+      const acRatio = coverage.requirements ? coverage.criteria / coverage.requirements : 0;
+      const tcRatio = coverage.criteria ? coverage.tests / coverage.criteria : 0;
+      const acTone = !coverage.requirements ? false : acRatio < 1 ? "blocked" : (acRatio < 1.2 || acRatio > 2.0) ? "warn" : "ok";
+      const tcTone = !coverage.criteria ? false : tcRatio < 1.5 ? "warn" : "ok";
+      const stats = statsHtml([
+        {value:coverage.requirements ?? 0, label:"需求", action:"go-requirements", title:"開啟 Requirements 頁籤"},
+        {value:coverage.criteria ?? 0, label:"驗收條件", action:"go-criteria", title:"開啟 Criteria 頁籤"},
+        {value:coverage.tests ?? 0, label:"測試案例", action:"go-tests", title:"開啟 Test Cases 頁籤"},
+        {value:acRatio.toFixed(2), label:"AC / REQ", tone:acTone, hint:"門檻 ≥ 1.0，理想 1.2–1.8", meter:acRatio / 1.8, title:"check.py：低於 1.0 報 AC_PER_REQ 錯誤；貼著 1.0 或高於 2.0 代表需求顆粒度不對"},
+        {value:tcRatio.toFixed(2), label:"TC / AC", tone:tcTone, hint:"門檻 ≥ 1.5", meter:tcRatio / 1.5, title:"check.py：低於 1.5 報 TC_PER_AC 警告，代表沒有真的套展開矩陣"},
+        {value:coverage.reqsWithoutAc ?? 0, label:"REQ 缺 AC", tone:(coverage.reqsWithoutAc ?? 0) > 0 ? "warn" : "ok", action:"rtm-gap", title:"切換「只看缺口」"},
+        {value:coverage.acsWithoutTest ?? 0, label:"AC 缺 TC", tone:(coverage.acsWithoutTest ?? 0) > 0 ? "warn" : "ok", action:"rtm-gap", title:"切換「只看缺口」"},
+        {value:coverage.blocked ?? 0, label:"已知缺口（被擋住）", tone:(coverage.blocked ?? 0) > 0 ? "blocked" : false, action:"rtm-gap", title:"切換「只看缺口」"},
+        {value:coverage.issues ?? 0, label:"待確認事項", tone:(coverage.issues ?? 0) > 0 ? "warn" : false, action:"go-issues", title:"開啟 Issues 頁籤"},
+        ...(coverage.uiControls ? [{value:coverage.uiGaps ?? 0, label:"UI 面向缺 TC", tone:(coverage.uiGaps ?? 0) > 0 ? "warn" : "ok", action:"go-ui", hint:`${coverage.uiControls} 個 control · ${coverage.uiSpecified} 個 specified`, title:"開啟 UI Coverage 頁籤"}] : [])
+      ]);
+      const modes = `<span class="group">${RTM_MODES.map(([mode, label]) => `<button class="mini${rtmMode === mode ? " on" : ""}" data-action="rtm-mode" data-value="${mode}">${label}</button>`).join("")}</span>`;
+      const expanders = rtmMode === "table" ? "" : `<button class="mini" data-action="rtm-expand">展開全部</button><button class="mini" data-action="rtm-collapse">收合全部</button>`;
+      const extra = modes
+        + `<button class="mini${rtmGapOnly ? " on" : ""}" data-action="rtm-gap" title="只顯示沒有 AC，或有 AC 卻沒有 TC 的需求">只看缺口</button>`
+        + expanders
+        + chipGroup("Risk", RISK_LEVELS, riskFilter, "risk-filter", countBy(asList(data.tests).filter(isLive), row => row.risk?.level))
+        + chipGroup("Type", TEST_TYPES, typeFilter, "type-filter", countBy(asList(data.tests).filter(isLive), row => row.type))
+        + docChips();
+      let body = EMPTY_HTML;
+      if (rtmMode === "table") {
+        const rows = arrange(rtmRows(entries), "rtm", "rtm");
+        body = rows.length ? tableHtml(rows, RTM_FIELDS, "rtm", "requirements") : EMPTY_HTML;
+      } else if (entries.length || model.orphanAc.length || model.orphanTc.length) {
+        const branches = rtmBranches(rtmMode, entries, model);
+        body = rtmMode === "map"
+          ? `<div class="scroller"><div class="map">${buildNode("map", "root", "__root", `${data.project ?? "RTM"} 需求追溯矩陣`, countTail(entries.length), branches || null, "", "RTM")}</div></div>`
+          : `<div class="scroller"><div class="tree">${branches}</div></div>`;
+      }
+      el("content").innerHTML = stats + toolbarHtml(model.entries.length, entries.length, extra) + body;
+    }
+
+    function allNodeIds() {
+      return ["__root", "__orphan", ...asList(data.requirements).map(item => String(item.id)), ...asList(data.criteria).map(item => String(item.id))];
+    }
+
+    function expandAncestors(id) {
+      collapsedNodes.delete("__root");
+      collapsedNodes.delete("__orphan");
+      const found = recordFor(id);
+      if (!found) return;
+      const expandAc = acId => {
+        collapsedNodes.delete(String(acId));
+        const criterion = recordFor(acId);
+        for (const reqId of asList(criterion?.record.req)) collapsedNodes.delete(String(reqId));
+      };
+      if (found.collection === "criteria") expandAc(id);
+      if (found.collection === "tests") for (const acId of asList(found.record.ac)) expandAc(acId);
+      if (found.collection === "issues") {
+        for (const criterion of blockedByIssue(String(id))) expandAc(criterion.id);
+      }
+      collapsedNodes.delete(String(id));
+    }
+
+    /* ========== UI Coverage ========== */
+    function uiCellInfo(control, aspect) {
+      const cell = control.aspects && typeof control.aspects === "object" ? control.aspects[aspect] : null;
+      const status = cell && typeof cell === "object" ? cell.status : undefined;
+      const info = {cell: cell && typeof cell === "object" ? cell : {}, status: UI_STATUSES.includes(status) ? status : "unknown",
+                    reqs:[], acs:[], blockedAcs:[], tests:[], gap:false, blocked:false};
+      if (info.status !== "specified") return info;
+      for (const reqId of asList(cell.refs)) {
+        const found = recordFor(reqId);
+        if (!found || found.collection !== "requirements" || !isLive(found.record)) continue;
+        info.reqs.push(found.record);
+        for (const ac of criteriaForReq(reqId).filter(isLive)) {
+          if (asList(ac.blocked).length) info.blockedAcs.push(ac); else info.acs.push(ac);
+        }
+      }
+      const seen = new Set();
+      for (const ac of info.acs) for (const test of testsForAc(ac.id).filter(isLive)) {
+        if (!seen.has(test.id)) { seen.add(test.id); info.tests.push(test); }
+      }
+      info.blocked = !info.acs.length && info.blockedAcs.length > 0;
+      info.gap = !info.blocked && !info.tests.length;
+      return info;
+    }
+
+    function uiModel() {
+      const controls = asList(data.uiControls).filter(record => record && typeof record === "object" && isLive(record));
+      return controls.map(control => {
+        const cells = Object.fromEntries(UI_ASPECTS.map(aspect => [aspect, uiCellInfo(control, aspect)]));
+        const infos = Object.values(cells);
+        return {
+          control, cells,
+          testCount: new Set(infos.flatMap(info => info.tests.map(test => test.id))).size,
+          gaps: infos.filter(info => info.gap).length,
+          issues: infos.filter(info => info.status === "issue").length
+        };
+      });
+    }
+
+    function uiCellHtml(control, aspect, info) {
+      const cell = info.cell;
+      let cls = info.status, text = "", title = `${control.field ?? "?"} · ${aspect}（${UI_ASPECT_LABELS[aspect]}）`;
+      if (info.status === "specified") {
+        if (info.blocked) { cls = "blocked"; text = "⛔"; title += `\n驗收條件被 issue 擋住：${info.blockedAcs.map(ac => ac.id).join("、")}`; }
+        else if (info.gap) { cls = "gap"; text = "0"; title += info.reqs.length ? "\n有需求但還沒有任何測試案例" : "\n標為 specified 卻沒有指向需求"; }
+        else text = String(info.tests.length);
+        if (cell.rule) title += `\n${cell.rule}`;
+      } else if (info.status === "issue") { text = "!"; title += `\n規格缺漏：${asList(cell.refs).join("、") || "沒有指向 ISS"}`; }
+      else if (info.status === "not-applicable") { text = "—"; title += `\n不適用：${cell.reason ?? "（沒有理由）"}`; }
+      else { text = "?"; title += "\n這格沒有結論"; }
+      const selected = selectedId === control.id && focusAspect === aspect;
+      return `<button class="cell ${cls}${selected ? " selected" : ""}" data-action="ui-cell" data-value="${escapeHtml(`${control.id}|${aspect}`)}" title="${escapeHtml(title)}">${text}</button>`;
+    }
+
+    function renderUiView() {
+      const model = uiModel();
+      const query = searchQuery();
+      const rows = model.filter(row =>
+        (!uiSectionFilter.size || uiSectionFilter.has(row.control.section))
+        && (!uiComponentFilter.size || uiComponentFilter.has(row.control.component))
+        && (!uiGapOnly || row.gaps > 0)
+        && (!uiIssueOnly || row.issues > 0)
+        && matchesQuery(row.control, query));
+      const totals = {specified:0, "not-applicable":0, issue:0, unknown:0, gap:0, blocked:0};
+      for (const row of model) for (const info of Object.values(row.cells)) {
+        totals[info.status] = (totals[info.status] ?? 0) + 1;
+        if (info.gap) totals.gap++;
+        if (info.blocked) totals.blocked++;
+      }
+      const noTest = model.filter(row => !row.testCount).length;
+      const okTone = model.length ? "ok" : false;
+      const stats = statsHtml([
+        {value:model.length, label:"UI control", action:model.length ? "ui-clear" : null, title:"清除本頁篩選"},
+        {value:totals.specified, label:"specified 面向", tone:okTone},
+        {value:totals["not-applicable"], label:"not-applicable"},
+        {value:totals.issue, label:"issue", tone:totals.issue ? "blocked" : false, action:model.length ? "ui-issue" : null, title:"切換「只看有 issue」"},
+        {value:totals.gap, label:"specified 缺 TC", tone:totals.gap ? "warn" : okTone, action:model.length ? "ui-gap" : null, title:"切換「只看缺口」"},
+        {value:totals.blocked, label:"被擋住", tone:totals.blocked ? "blocked" : false},
+        {value:noTest, label:"沒有任何 TC 的 control", tone:noTest ? "warn" : okTone, action:model.length ? "ui-gap" : null, title:"切換「只看缺口」"},
+        ...(totals.unknown ? [{value:totals.unknown, label:"面向未盤點", tone:"blocked"}] : [])
+      ]);
+      if (!model.length) {
+        el("content").innerHTML = stats + `<p class="muted">這份檔案沒有 uiControls。有前端 SRS 的專案要先把每個 control 盤點進 inventory，見 <code>references/method.md</code> 的「UI control inventory」。</p>`;
+        return;
+      }
+      const sections = [...new Set(model.map(row => row.control.section ?? ""))];
+      const components = UI_COMPONENTS.filter(component => model.some(row => row.control.component === component));
+      const extra = chipGroup("區塊", sections, uiSectionFilter, "ui-section", countBy(model, row => row.control.section ?? ""))
+        + chipGroup("元件", components, uiComponentFilter, "ui-component", countBy(model, row => row.control.component))
+        + `<button class="mini${uiGapOnly ? " on" : ""}" data-action="ui-gap" title="只看有 specified 面向卻沒有測試案例的 control">只看缺口</button>`
+        + `<button class="mini${uiIssueOnly ? " on" : ""}" data-action="ui-issue" title="只看有面向指向待確認事項的 control">只看有 issue</button>`;
+      const legend = `<div class="ui-legend">
+        <span><i class="cell specified"></i>specified，數字＝測試案例數</span>
+        <span><i class="cell gap"></i>specified 但沒有測試案例</span>
+        <span><i class="cell blocked"></i>驗收條件被 issue 擋住</span>
+        <span><i class="cell issue"></i>規格缺漏，指向待確認事項</span>
+        <span><i class="cell not-applicable"></i>不適用</span>
+        <span><i class="cell unknown"></i>未盤點</span></div>`;
+      const head = `<tr><th style="width:270px">control</th>${UI_ASPECTS.map(aspect =>
+        `<th class="aspect" title="${escapeHtml(aspect)}">${escapeHtml(UI_ASPECT_LABELS[aspect])}<small>${escapeHtml(aspect)}</small></th>`).join("")}<th style="width:52px" title="這個 control 涵蓋到的測試案例數（去重）">TC</th></tr>`;
+      let body = "", lastSection = null;
+      for (const row of rows) {
+        const control = row.control;
+        const sectionName = control.section ?? "";
+        if (sectionName !== lastSection) {
+          body += `<tr class="ui-section"><td colspan="${UI_ASPECTS.length + 2}">${escapeHtml(sectionName || "（無區塊）")}</td></tr>`;
+          lastSection = sectionName;
+        }
+        body += `<tr data-row-id="${escapeHtml(control.id)}" class="${control.id === selectedId ? "selected" : ""}"><td><div class="ui-control">
+            <span><button class="id-link" data-target-id="${escapeHtml(control.id)}">${escapeHtml(String(control.id).replace("STT-", ""))}</button> <span class="fld">${escapeHtml(control.field ?? "?")}</span> <span class="badge component">${escapeHtml(control.component ?? "?")}</span></span>
+            <span class="lbl" title="${escapeHtml(control.label ?? "")}">${escapeHtml(control.label ?? "")}</span></div></td>`
+          + UI_ASPECTS.map(aspect => `<td>${uiCellHtml(control, aspect, row.cells[aspect])}</td>`).join("")
+          + `<td><b${row.testCount ? "" : ' class="muted"'}>${row.testCount}</b></td></tr>`;
+      }
+      el("content").innerHTML = stats + toolbarHtml(model.length, rows.length, extra) + legend
+        + (rows.length ? `<div class="scroller"><table class="ui-matrix"><thead>${head}</thead><tbody>${body}</tbody></table></div>` : EMPTY_HTML);
+    }
+
+    function openUiCell(value) {
+      const [id, aspect] = String(value).split("|");
+      focusAspect = UI_ASPECTS.includes(aspect) ? aspect : null;
+      openDetail(id, {keepFocus:true});
+    }
+
+    function locateInUi(id, push = true) {
+      selectedId = String(id);
+      activeView = "ui";
+      el("search").value = "";
+      render();
+      renderDrawer();
+      highlight(selectedId);
+      if (push) pushNav("ui", selectedId);
+    }
+
+    function renderView() {
+      if (activeView === "rtm") renderRtm();
+      else if (activeView === "ui") renderUiView();
+      else if (activeView === "issues") renderIssuesView();
+      else renderCollectionView(TAB_COLLECTION[activeView]);
+      hideHoverCard();
+      bindIdLinks(el("content"));
+      bindOpeners(); bindCarets(); bindSortHeaders(); bindColumnResizers(); bindToolbar(); bindHoverCards();
+      layoutSpines(); layoutScrollers();
+    }
+
+    function renderPreservingScroll() {
+      const previous = el("content").querySelector(".scroller");
+      const left = previous?.scrollLeft ?? 0, top = previous?.scrollTop ?? 0;
+      renderView();
+      const next = el("content").querySelector(".scroller");
+      if (next) { next.scrollLeft = left; next.scrollTop = top; }
+    }
+
+    function layoutScrollers() {
+      for (const node of el("content").querySelectorAll(".scroller")) {
+        const top = node.getBoundingClientRect().top;
+        node.style.maxHeight = `${Math.max(260, Math.round(window.innerHeight - top - 24))}px`;
+      }
+    }
+
+    function layoutSpines() {
+      for (const group of el("content").querySelectorAll(".map-children,.tree-children")) {
+        const children = [...group.children].filter(child => child.matches(".branch,.node"));
+        if (!children.length) continue;
+        const box = group.getBoundingClientRect();
+        const centerOf = element => { const rect = element.getBoundingClientRect(); return rect.top + rect.height / 2 - box.top; };
+        const entityOf = child => child.querySelector(":scope > .entity") || child;
+        const anchors = [centerOf(entityOf(children[0])), centerOf(entityOf(children[children.length - 1]))];
+        if (group.classList.contains("tree-children")) anchors.push(0);
+        else if (group.previousElementSibling) anchors.push(centerOf(group.previousElementSibling));
+        group.style.setProperty("--spine-top", `${Math.round(Math.min(...anchors))}px`);
+        group.style.setProperty("--spine-bottom", `${Math.round(box.height - Math.max(...anchors))}px`);
+      }
+    }
+
+    /* ========== 明細抽屜 ========== */
+    const KIND_COLOR = {DOC:"#334155", UI:"#0f766e", REQ:"#075985", AC:"#0e7490", TC:"#4f46e5", ISS:"#b91c1c"};
+
+    const section = (title, body, extra = "") => body ? `<section class="d-sec"><h3>${escapeHtml(title)}${extra}</h3>${body}</section>` : "";
+
+    function linkRow(id, tail = "") {
+      const found = recordFor(id);
+      const text = found ? labelOf(found.record, found.collection) : "找不到這筆記錄";
+      return `<button class="link-row${found ? "" : " missing-id"}" data-target-id="${escapeHtml(String(id))}" title="${escapeHtml(String(text))}">
+        <span class="rid">${escapeHtml(String(id))}</span><span class="rtext">${escapeHtml(String(text))}</span>${tail ? `<span class="rtail">${tail}</span>` : ""}
+      </button>`;
+    }
+
+    const linkRows = (ids, tailOf = null) => ids.length
+      ? `<div class="link-list">${ids.map(id => linkRow(id, tailOf ? tailOf(id) : "")).join("")}</div>` : "";
+
+    const textBlock = value => value ? `<div class="d-body">${escapeHtml(value)}</div>` : "";
+    const listBlock = values => asList(values).length ? `<ol class="d-list">${asList(values).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ol>` : "";
+    const srcBlock = values => asList(values).length ? `<div class="chips">${asList(values).map(renderSrc).join("")}</div>` : "";
+    const fromBlock = value => value ? `<span class="from-chip">${escapeHtml(value)}</span>` : "";
+    const changeBlock = record => record.change
+      ? `<div><span class="badge ${escapeHtml(record.change)}">${escapeHtml(record.change)}</span>${asList(record.changed).length ? ` <span class="muted">變動欄位：${escapeHtml(asList(record.changed).join("、"))}</span>` : ""}${asList(record.was).length ? ` <span class="muted">來自 ${escapeHtml(asList(record.was).join("、"))}</span>` : ""}</div>`
+      : "";
+
+    const testsForAc = acId => asList(data.tests).filter(test => asList(test.ac).map(String).includes(String(acId)));
+    const criteriaForReq = reqId => asList(data.criteria).filter(item => asList(item.req).map(String).includes(String(reqId)));
+    const riskBadge = id => { const found = recordFor(id); const level = found?.record.risk?.level; return level ? `<span class="badge ${escapeHtml(level)}">${escapeHtml(level)}</span>` : ""; };
+    const acTail = id => { const found = recordFor(id); if (!found) return ""; return asList(found.record.blocked).length ? `<span class="badge CONFLICT">⛔</span>` : `<span class="muted">${testsForAc(id).length} TC</span>`; };
+
+    function issueInline(id) {
+      const found = recordFor(id);
+      if (!found) return `<div class="issue-inline">找不到 ${escapeHtml(String(id))}</div>`;
+      const issue = found.record;
+      return `<div class="issue-inline">
+        <div class="head"><span class="badge ${escapeHtml(issue.type)}">${escapeHtml(issue.type)}</span>
+          <button class="id-link" data-target-id="${escapeHtml(issue.id)}">${escapeHtml(issue.id)}</button>
+          <span class="badge owner">${escapeHtml(issue.owner ?? "?")}</span></div>
+        <div class="d-body">${escapeHtml(issue.text)}</div>
+      </div>`;
+    }
+
+    const kvHtml = pairs => {
+      const rows = pairs.filter(([, value]) => value);
+      return rows.length ? `<dl class="kv">${rows.map(([key, value]) => `<dt>${escapeHtml(key)}</dt><dd>${value}</dd>`).join("")}</dl>` : "";
+    };
+    const valueHtml = value => value === null || value === undefined || value === ""
+      ? "" : (typeof value === "object" ? `<code>${escapeHtml(JSON.stringify(value))}</code>` : escapeHtml(String(value)));
+    const channelBadge = channel => `<span class="chan ${escapeHtml(channel ?? "")}">${escapeHtml(channel ?? "?")}</span>`;
+    const subHead = text => `<div class="d-sub">${escapeHtml(text)}</div>`;
+
+    function automationHtml(automation) {
+      if (!automation || typeof automation !== "object") return "";
+      const known = new Set(["mode","actor","entrypoint","fixture","inputs","observations","oracles","cleanup","stateTransition"]);
+      const fixture = automation.fixture && typeof automation.fixture === "object" ? automation.fixture : null;
+      const head = kvHtml([
+        ["mode", automation.mode ? `<span class="badge owner">${escapeHtml(automation.mode)}</span>` : ""],
+        ["actor", valueHtml(automation.actor)],
+        ["entrypoint", automation.entrypoint ? `<code>${escapeHtml(automation.entrypoint)}</code>` : ""],
+        ["fixture", fixture
+          ? `${fixture.name ? `<code>${escapeHtml(fixture.name)}</code> ` : ""}${escapeHtml(fixture.provision ?? "")}`
+          : valueHtml(automation.fixture)]
+      ]);
+      const inputs = automation.inputs && typeof automation.inputs === "object" && !Array.isArray(automation.inputs)
+        ? Object.entries(automation.inputs).map(([key, value]) =>
+            `<div style="margin-top:4px"><span class="muted" style="font-weight:650">${escapeHtml(key)}</span>${Array.isArray(value) ? listBlock(value) : `<div class="d-body">${valueHtml(value)}</div>`}</div>`).join("")
+        : (Array.isArray(automation.inputs) ? listBlock(automation.inputs) : valueHtml(automation.inputs));
+      const observations = asList(automation.observations).filter(item => item && typeof item === "object");
+      const oracles = asList(automation.oracles).filter(item => item && typeof item === "object");
+      const oracleByTarget = groupBy(oracles, item => [String(item.observation ?? "")]);
+      const covered = new Set();
+      const rows = observations.map(item => {
+        const target = String(item.target ?? "");
+        const matches = oracleByTarget.get(target) || [];
+        covered.add(target);
+        const verdicts = matches.length
+          ? matches.map(match => `<div><span class="muted">${escapeHtml(match.operator ?? "?")}</span> ${valueHtml(match.expected) || `<span class="muted">（空）</span>`}</div>`).join("")
+          : `<span class="miss">沒有對應的 oracle</span>`;
+        return `<tr><td>${channelBadge(item.channel)} ${escapeHtml(target)}</td><td>${verdicts}</td></tr>`;
+      }).concat(oracles.filter(match => !covered.has(String(match.observation ?? ""))).map(match =>
+        `<tr><td class="miss">${escapeHtml(match.observation ?? "?")} <span class="muted">（沒有對應的 observation）</span></td><td><span class="muted">${escapeHtml(match.operator ?? "?")}</span> ${valueHtml(match.expected)}</td></tr>`));
+      const table = rows.length
+        ? `<table class="oracle-table"><thead><tr><th style="width:46%">觀察點</th><th>判定 · 期望值</th></tr></thead><tbody>${rows.join("")}</tbody></table>` : "";
+      const cleanup = automation.cleanup && typeof automation.cleanup === "object"
+        ? `${automation.cleanup.strategy ? `<span class="badge owner">${escapeHtml(automation.cleanup.strategy)}</span> ` : ""}${escapeHtml(automation.cleanup.instruction ?? "")}`
+        : valueHtml(automation.cleanup);
+      const others = Object.entries(automation).filter(([key]) => !known.has(key));
+      const raw = Object.fromEntries(Object.entries(automation).filter(([key]) => key !== "stateTransition"));
+      return head
+        + (inputs ? subHead("INPUTS") + inputs : "")
+        + (table ? subHead(`OBSERVATIONS × ORACLES（${observations.length} / ${oracles.length}）`) + table : "")
+        + (cleanup ? subHead("CLEANUP") + `<div class="d-body">${cleanup}</div>` : "")
+        + (others.length ? subHead("其他") + renderObject(Object.fromEntries(others), false) : "")
+        + `<details class="raw"><summary>原始 JSON</summary>${renderObject(raw, false)}</details>`;
+    }
+
+    function stateTransitionHtml(transition) {
+      if (!transition || typeof transition !== "object") return "";
+      const phase = value => {
+        if (value === null || value === undefined || (typeof value === "object" && !Object.keys(value).length)) return `<span class="muted">未定義</span>`;
+        if (Array.isArray(value)) return listBlock(value);
+        if (typeof value === "object") return Object.entries(value).map(([key, inner]) =>
+          `<div><span class="muted" style="font-weight:650">${escapeHtml(key)}</span>${Array.isArray(inner) ? listBlock(inner) : `<div class="d-body">${valueHtml(inner)}</div>`}</div>`).join("");
+        return `<div class="d-body">${escapeHtml(String(value))}</div>`;
+      };
+      const labels = {initial:"INITIAL · 初始狀態", trigger:"TRIGGER · 觸發動作", final:"FINAL · 成功後", rollback:"ROLLBACK · 失敗回復"};
+      const others = Object.entries(transition).filter(([key]) => !(key in labels));
+      return `<div class="timeline">${Object.keys(labels).map(key =>
+        `<div class="${key === "rollback" ? "rb" : ""}"><b>${escapeHtml(labels[key])}</b>${phase(transition[key])}</div>`).join("")}</div>`
+        + (others.length ? renderObject(Object.fromEntries(others), false) : "");
+    }
+
+    function targetHtml(target) {
+      if (!target || typeof target !== "object") return "";
+      const aspectLabel = target.kind === "ui-field" && UI_ASPECT_LABELS[target.aspect] ? ` <span class="muted">${escapeHtml(UI_ASPECT_LABELS[target.aspect])}</span>` : "";
+      return kvHtml([
+        ["kind", `<span class="badge owner">${escapeHtml(target.kind ?? "?")}</span>`],
+        ["name", `<code>${escapeHtml(target.name ?? "?")}</code>`],
+        ["aspect", `<code>${escapeHtml(target.aspect ?? "?")}</code>${aspectLabel}`]
+      ]);
+    }
+
+    function uiAspectBlocks(record) {
+      return UI_ASPECTS.map(aspect => {
+        const info = uiCellInfo(record, aspect), cell = info.cell;
+        let body = "";
+        if (info.status === "specified") {
+          const chain = info.reqs.length
+            ? `<div class="chain">${info.reqs.map(req => {
+                const acs = criteriaForReq(req.id).filter(isLive);
+                const tcCount = new Set(acs.flatMap(ac => testsForAc(ac.id).filter(isLive).map(test => test.id))).size;
+                return linkRow(req.id, `<span class="muted">${acs.length} AC · ${tcCount} TC</span>`);
+              }).join("")}</div>`
+            : `<p class="d-empty" style="color:var(--high)">標為 specified 卻沒有指向任何需求。</p>`;
+          const note = info.blocked ? `<p class="muted">驗收條件全部被 issue 擋住，是已知缺口。</p>`
+            : (info.gap && info.reqs.length ? `<p class="muted" style="color:var(--medium)">有需求但還沒有任何測試案例。</p>` : "");
+          body = textBlock(cell.rule) + chain + note;
+        } else if (info.status === "issue") {
+          body = asList(cell.refs).length ? asList(cell.refs).map(issueInline).join("") : `<p class="d-empty" style="color:var(--high)">標為 issue 卻沒有指向任何待確認事項。</p>`;
+        } else if (info.status === "not-applicable") {
+          body = `<div class="d-body muted">${escapeHtml(cell.reason || "（沒有寫理由）")}</div>`;
+        } else body = `<p class="d-empty" style="color:var(--high)">這格沒有結論。</p>`;
+        const tail = info.status === "specified" && !info.gap && !info.blocked ? `<span class="muted">${info.tests.length} TC</span>` : "";
+        return `<div class="aspect-block ${escapeHtml(info.status)}${focusAspect === aspect ? " focus" : ""}" data-aspect="${escapeHtml(aspect)}">
+          <div class="ahead"><b>${escapeHtml(UI_ASPECT_LABELS[aspect])}</b><code>${escapeHtml(aspect)}</code><span class="badge ${escapeHtml(info.status)}">${escapeHtml(info.status)}</span>${tail}</div>
+          ${body}${srcBlock(cell.src)}</div>`;
+      }).join("");
+    }
+
+    function detailHtml(collection, record) {
+      if (collection === "uiControls") {
+        return `<p class="d-title">${escapeHtml(record.label ?? "")}</p>`
+          + `<div class="chips" style="margin-bottom:14px"><code>${escapeHtml(record.field ?? "?")}</code><span class="badge component">${escapeHtml(record.component ?? "?")}</span><span class="badge owner">${escapeHtml([record.page, record.section].filter(Boolean).join(" · "))}</span></div>`
+          + section("變更", changeBlock(record))
+          + section("來源", srcBlock(record.src))
+          + section("十二個規則面向", uiAspectBlocks(record));
+      }
+      if (collection === "requirements") {
+        const criteria = criteriaForReq(record.id);
+        const target = record.target;
+        const control = target?.kind === "ui-field" ? asList(data.uiControls).find(item => item && item.field === target.name && isLive(item)) : null;
+        const controlSection = target?.kind === "ui-field" && (control || asList(data.uiControls).length)
+          ? section("UI control", control ? linkRow(control.id) : `<p class="d-empty" style="color:var(--high)">uiControls 裡找不到 field「${escapeHtml(target.name)}」。</p>`)
+          : "";
+        return `<p class="d-title">${escapeHtml(record.text)}</p>`
+          + section("變更", changeBlock(record))
+          + section("斷言對象", targetHtml(target))
+          + controlSection
+          + section("來源", srcBlock(record.src))
+          + section("原始編號", fromBlock(record.from))
+          + section(`驗收條件（${criteria.length}）`, criteria.length ? linkRows(criteria.map(item => item.id), acTail) : `<p class="d-empty">這條需求還沒有任何驗收條件。</p>`);
+      }
+      if (collection === "criteria") {
+        const tests = testsForAc(record.id);
+        const blocked = asList(record.blocked);
+        return `<div class="gwt">
+            <div class="g"><b>GIVEN</b>${escapeHtml(record.given)}</div>
+            <div class="w"><b>WHEN</b>${escapeHtml(record.when)}</div>
+            <div class="t"><b>THEN</b>${escapeHtml(record.then)}</div>
+          </div>`
+          + section("變更", changeBlock(record))
+          + section("被以下待確認事項擋住", blocked.length ? blocked.map(issueInline).join("") + `<p class="muted">被擋住的驗收條件刻意不展開測試案例，讓缺口留著。</p>` : "")
+          + section(`所屬需求（${asList(record.req).length}）`, linkRows(asList(record.req)))
+          + section(`測試案例（${tests.length}）`, tests.length
+            ? linkRows(tests.map(item => item.id), riskBadge)
+            : (blocked.length ? "" : `<p class="d-empty">這條驗收條件還沒有任何測試案例，也沒有標記 blocked。</p>`))
+          + section("來源", srcBlock(record.src))
+          + section("原始編號", fromBlock(record.from));
+      }
+      if (collection === "tests") {
+        const acIds = asList(record.ac);
+        const reqIds = [...new Set(acIds.flatMap(id => asList(recordFor(id)?.record.req)))];
+        const risk = record.risk;
+        const automation = record.automation;
+        const stateTransition = automation?.stateTransition;
+        return `<p class="d-title">${escapeHtml(record.title)}</p>`
+          + `<div class="chips" style="margin-bottom:14px"><span class="badge ${escapeHtml(record.type)}">${escapeHtml(record.type)}</span>${record.from ? fromBlock(record.from) : ""}</div>`
+          + section("變更", changeBlock(record))
+          + section("風險", risk ? `<div class="risk-box">
+              <div class="axes"><span class="badge ${escapeHtml(risk.level)}">${escapeHtml(risk.level)}</span>
+                <span class="muted">Impact ${escapeHtml(risk.impact)} × Likelihood ${escapeHtml(risk.likelihood)}</span></div>
+              <div class="why">${escapeHtml(risk.why)}</div></div>` : "")
+          + section("前置（setup）", listBlock(record.setup))
+          + section("步驟（steps）", listBlock(record.steps))
+          + section("預期結果（expected）", listBlock(record.expected))
+          + section("自動化執行契約", automationHtml(automation))
+          + section("狀態轉換", stateTransitionHtml(stateTransition))
+          + section(`驗收條件（${acIds.length}）`, linkRows(acIds, acTail))
+          + section(`上層需求（${reqIds.length}）`, linkRows(reqIds));
+      }
+      if (collection === "issues") {
+        const blocks = blockedByIssue(String(record.id));
+        return `<div class="chips" style="margin-bottom:12px"><span class="badge ${escapeHtml(record.type)}">${escapeHtml(record.type)}</span><span class="badge">${escapeHtml(record.category ?? "?")}</span><span class="badge owner">需 ${escapeHtml(record.owner ?? "?")} 確認</span>${record.from ? fromBlock(record.from) : ""}</div>`
+          + section("內容", textBlock(record.text))
+          + section("影響範圍", textBlock(record.impact))
+          + section("解除條件", listBlock(record.unblockConditions))
+          + section("重跑條件", listBlock(record.rerunConditions))
+          + section("變更", changeBlock(record))
+          + section(`相關文件（${asList(record.docs).length}）`, linkRows(asList(record.docs)))
+          + section(`相關記錄（${asList(record.refs).length}）`, linkRows(asList(record.refs)))
+          + section(`擋住的驗收條件（${blocks.length}）`, blocks.length ? linkRows(blocks.map(item => item.id)) : `<p class="d-empty">沒有任何驗收條件標記被這則事項擋住。</p>`);
+      }
+      if (collection === "docs") {
+        const reqs = asList(data.requirements).filter(item => srcDocIds(item).includes(String(record.id)));
+        const criteria = asList(data.criteria).filter(item => srcDocIds(item).includes(String(record.id)));
+        return `<p class="d-title">${escapeHtml(record.path)}</p>`
+          + `<div class="chips" style="margin-bottom:14px"><span class="badge ${escapeHtml(record.type)}">${escapeHtml(record.type)}</span></div>`
+          + section("變更", changeBlock(record))
+          + section("章節盤點", record.sections ? renderObject(record.sections, false) : "")
+          + section(`引用此文件的需求（${reqs.length}）`, linkRows(reqs.map(item => item.id), acTail))
+          + section(`引用此文件的驗收條件（${criteria.length}）`, linkRows(criteria.map(item => item.id), acTail));
+      }
+      return "";
+    }
+
+    function renderDrawer() {
+      const found = selectedId ? recordFor(selectedId) : null;
+      if (!found) { closeDrawer(false); return; }
+      const wasOpen = el("drawer").classList.contains("open");
+      const kind = KIND_OF[found.collection];
+      el("drawerKind").textContent = kind;
+      el("drawerKind").style.background = KIND_COLOR[kind] || "#334155";
+      el("drawerId").textContent = found.record.id;
+      el("drawerBody").innerHTML = detailHtml(found.collection, found.record);
+      el("drawerLocate").classList.toggle("hidden", found.collection === "docs");
+      el("drawerLocate").textContent = found.collection === "uiControls" ? "在 UI Coverage 中定位" : "在 RTM 中定位";
+      el("drawerLocate").title = found.collection === "uiControls" ? "切到 UI Coverage 並定位這一筆" : "切到 RTM 並定位這一筆";
+      el("drawer").classList.add("open");
+      document.body.classList.add("drawer-open");
+      el("drawerBody").scrollTop = 0;
+      if (focusAspect && found.collection === "uiControls") {
+        const block = el("drawerBody").querySelector(`[data-aspect="${focusAspect}"]`);
+        if (block) el("drawerBody").scrollTop = Math.max(0, block.offsetTop - 12);
+      }
+      bindIdLinks(el("drawerBody"));
+      markSelection();
+      if (!wasOpen) { layoutSpines(); layoutScrollers(); }
+    }
+
+    function openDetail(id, {push = true, locate = false, keepFocus = false} = {}) {
+      const found = recordFor(id);
+      if (!found) { toast(`找不到 ${id}`, "error"); return; }
+      selectedId = String(id);
+      if (!keepFocus) focusAspect = null;
+      hideHoverCard();
+      if (locate && found.collection === "uiControls") { locateInUi(selectedId, false); return; }
+      if (locate) { locateInRtm(selectedId, false); return; }
+      renderDrawer();
+      if (push) pushNav(activeView, selectedId);
+    }
+
+    function locateInRtm(id, push = true) {
+      selectedId = String(id);
+      expandAncestors(selectedId);
+      if (rtmMode === "table") rtmMode = "map";
+      activeView = "rtm";
+      el("search").value = "";
+      render();
+      renderDrawer();
+      highlight(selectedId);
+      if (push) pushNav("rtm", selectedId);
+    }
+
+    function closeDrawer(push = true) {
+      el("drawer").classList.remove("open");
+      document.body.classList.remove("drawer-open");
+      selectedId = null;
+      markSelection();
+      if (push) pushNav(activeView, null);
+    }
+
+    function markSelection() {
+      for (const node of el("content").querySelectorAll("[data-node-id]")) node.classList.toggle("selected", node.dataset.nodeId === selectedId);
+      for (const row of el("content").querySelectorAll("tr[data-row-id]")) row.classList.toggle("selected", row.dataset.rowId === selectedId);
+      for (const cell of el("content").querySelectorAll(".cell[data-value]")) cell.classList.toggle("selected", cell.dataset.value === `${selectedId}|${focusAspect}`);
+    }
+
+    function highlight(id) {
+      const targets = [...el("content").querySelectorAll(`[data-node-id],[data-row-id]`)]
+        .filter(node => (node.dataset.nodeId || node.dataset.rowId) === String(id));
+      if (!targets.length) return;
+      for (const target of targets) { target.classList.remove("highlight"); void target.offsetWidth; target.classList.add("highlight"); }
+      targets[0].scrollIntoView({behavior:"smooth", block:"center", inline:"center"});
+    }
+
+    /* ========== 速覽卡 ========== */
+    function hoverValue(field, value) {
+      if (field === "risk" && value) return `${escapeHtml(value.level)} · ${escapeHtml(value.why ?? "")}`;
+      if (field === "src") return asList(value).map(item => escapeHtml(item)).join("<br>");
+      if (field === "blocked") return asList(value).length ? `⛔ ${asList(value).map(escapeHtml).join("、")}` : "";
+      if (Array.isArray(value)) return value.map(escapeHtml).join("<br>");
+      return escapeHtml(value);
+    }
+
+    function showHoverCard(node) {
+      const found = recordFor(node.dataset.hoverId);
+      if (!found) return;
+      const rows = (HOVER_FIELDS[found.collection] || []).map(field => [field, hoverValue(field, found.record[field])])
+        .filter(([, value]) => value)
+        .map(([field, value]) => `<div class="hc-row"><span class="hc-key">${escapeHtml(field)}</span><span class="hc-val">${value}</span></div>`).join("");
+      const card = el("hoverCard");
+      card.innerHTML = `<div class="hc-head">${escapeHtml(found.record.id)}<span class="hc-go">點一下看完整明細 ↗</span></div>${rows}`;
+      card.classList.remove("hidden");
+      const anchor = node.getBoundingClientRect();
+      const size = card.getBoundingClientRect();
+      let left = anchor.right + 8;
+      if (left + size.width > window.innerWidth - 12) left = Math.max(12, anchor.left - size.width - 8);
+      let top = anchor.top - 6;
+      if (top + size.height > window.innerHeight - 12) top = Math.max(12, window.innerHeight - size.height - 12);
+      card.style.left = `${Math.round(left)}px`;
+      card.style.top = `${Math.round(top)}px`;
+    }
+
+    function hideHoverCard() {
+      clearTimeout(hoverShowTimer); clearTimeout(hoverHideTimer);
+      el("hoverCard").classList.add("hidden");
+    }
+
+    function bindHoverCards() {
+      for (const node of el("content").querySelectorAll("[data-hover-id]")) {
+        node.onmouseenter = () => { clearTimeout(hoverHideTimer); clearTimeout(hoverShowTimer); hoverShowTimer = setTimeout(() => showHoverCard(node), 180); };
+        node.onmouseleave = () => { clearTimeout(hoverShowTimer); hoverHideTimer = setTimeout(hideHoverCard, 160); };
+        node.onfocus = () => showHoverCard(node);
+        node.onblur = hideHoverCard;
+      }
+    }
+
+    /* ========== 事件綁定 ========== */
+    function bindIdLinks(scope) {
+      for (const node of scope.querySelectorAll("[data-target-id]")) {
+        node.onclick = event => { event.stopPropagation(); openDetail(node.dataset.targetId); };
+      }
+    }
+
+    function bindOpeners() {
+      for (const node of el("content").querySelectorAll("[data-open-id]")) {
+        node.onclick = () => openDetail(node.dataset.openId);
+        node.onkeydown = event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openDetail(node.dataset.openId); } };
+      }
+      for (const row of el("content").querySelectorAll("tr[data-row-id]")) {
+        row.ondblclick = () => openDetail(row.dataset.rowId);
+      }
+    }
+
+    function bindCarets() {
+      for (const node of el("content").querySelectorAll("[data-toggle]")) {
+        node.onclick = event => { event.stopPropagation(); toggleNode(node.dataset.toggle); };
+      }
+    }
+
+    function toggleNode(id) {
+      if (collapsedNodes.has(id)) collapsedNodes.delete(id); else collapsedNodes.add(id);
+      hideHoverCard();
+      renderPreservingScroll();
+    }
+
+    function bindSortHeaders() {
+      for (const cell of el("content").querySelectorAll("[data-sort-field]")) {
+        cell.onclick = () => { if (!suppressSort) cycleSort(activeView, cell.dataset.sortField); };
+      }
+    }
+
+    function bindColumnResizers() {
+      for (const handle of el("content").querySelectorAll("[data-resize-field]")) {
+        handle.onpointerdown = event => {
+          event.preventDefault(); event.stopPropagation();
+          suppressSort = true;
+          const field = handle.dataset.resizeField;
+          const cell = handle.closest("th");
+          const table = handle.closest("table");
+          const columns = [...table.querySelectorAll("col")];
+          const column = columns[[...table.querySelectorAll("thead th")].indexOf(cell)];
+          if (!column) return;
+          const startX = event.clientX;
+          const startWidth = parseFloat(column.style.width) || cell.offsetWidth;
+          const totalWidth = () => columns.reduce((sum, item) => sum + (parseFloat(item.style.width) || 0), 0);
+          const move = pointer => { column.style.width = `${Math.max(80, Math.round(startWidth + pointer.clientX - startX))}px`; table.style.width = `${totalWidth()}px`; };
+          const up = () => {
+            window.removeEventListener("pointermove", move);
+            window.removeEventListener("pointerup", up);
+            (columnWidths[activeView] ||= {})[field] = parseFloat(column.style.width);
+            storeWidths();
+            setTimeout(() => { suppressSort = false; renderView(); }, 0);
+          };
+          window.addEventListener("pointermove", move);
+          window.addEventListener("pointerup", up);
+        };
+        handle.ondblclick = event => {
+          event.stopPropagation();
+          if (columnWidths[activeView]) { delete columnWidths[activeView][handle.dataset.resizeField]; storeWidths(); renderView(); }
+        };
+      }
+    }
+
+    function toggleIn(set, value) { if (set.has(value)) set.delete(value); else set.add(value); }
+
+    function bindToolbar() {
+      for (const button of el("content").querySelectorAll("[data-action]")) {
+        button.onclick = () => {
+          const {action, value} = button.dataset;
+          if (action === "reset-sort") delete sortState[activeView];
+          else if (action === "reset-widths") { delete columnWidths[activeView]; storeWidths(); }
+          else if (action === "rtm-mode") rtmMode = value;
+          else if (action === "rtm-gap") rtmGapOnly = !rtmGapOnly;
+          else if (action === "rtm-expand") collapsedNodes = new Set();
+          else if (action === "rtm-collapse") collapsedNodes = new Set(allNodeIds());
+          else if (action === "risk-filter") toggleIn(riskFilter, value);
+          else if (action === "type-filter") toggleIn(typeFilter, value);
+          else if (action === "doc-filter") toggleIn(docFilter, value);
+          else if (action === "blocked-only") criteriaBlockedOnly = !criteriaBlockedOnly;
+          else if (action === "issue-type") toggleIn(issueTypeFilter, value);
+          else if (action === "issue-owner") toggleIn(issueOwnerFilter, value);
+          else if (action === "issue-from") issueFromOnly = !issueFromOnly;
+          else if (action === "show-removed") showRemoved = !showRemoved;
+          else if (action === "tests-density") { testsCompact = value === "compact"; storeDensity(); }
+          else if (action === "ui-section") toggleIn(uiSectionFilter, value);
+          else if (action === "ui-component") toggleIn(uiComponentFilter, value);
+          else if (action === "ui-gap") { uiGapOnly = !uiGapOnly; if (activeView !== "ui") { switchView("ui"); return; } }
+          else if (action === "ui-issue") { uiIssueOnly = !uiIssueOnly; if (activeView !== "ui") { switchView("ui"); return; } }
+          else if (action === "ui-clear") { uiSectionFilter.clear(); uiComponentFilter.clear(); uiGapOnly = false; uiIssueOnly = false; }
+          else if (action === "ui-cell") { openUiCell(value); return; }
+          else if (action === "go-issues") { switchView("issues"); return; }
+          else if (action === "go-ui") { switchView("ui"); return; }
+          else if (action === "go-requirements") { switchView("requirements"); return; }
+          else if (action === "go-criteria") { switchView("criteria"); return; }
+          else if (action === "go-tests") { switchView("tests"); return; }
+          renderView();
+        };
+      }
+    }
+
+    function toggleSearch(force) {
+      const input = el("search");
+      const show = force === undefined ? input.classList.contains("hidden") : force;
+      input.classList.toggle("hidden", !show);
+      el("searchToggle").setAttribute("aria-label", show ? "關閉搜尋" : "開啟搜尋");
+      if (show) input.focus(); else { input.value = ""; if (data) renderView(); }
+      layoutScrollers();
+    }
+
+    function toast(message, type = "info") {
+      const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      el("toasts").insertAdjacentHTML("beforeend", `<div id="${id}" class="toast ${type === "error" ? "error" : ""}">${escapeHtml(message)}</div>`);
+      setTimeout(() => el(id)?.remove(), 4200);
+    }
+
+    /* ========== 檔案載入 ========== */
+    function ingest(text, label, handle = null) {
+      try { setData(JSON.parse(text), handle, label); }
+      catch (error) { toast(`載入失敗：${error.message}`, "error"); }
+    }
+
+    async function openJsonFile() {
+      try {
+        if ("showOpenFilePicker" in window) {
+          const [handle] = await window.showOpenFilePicker({types:[{description:"spec-to-tests JSON", accept:{"application/json":[".json"]}}], multiple:false});
+          await loadFromHandle(handle);
+          if (isLocalhost) await storeHandle(handle);
+        } else el("fileInput").click();
+      } catch (error) { if (error.name !== "AbortError") toast(`載入失敗：${error.message}`, "error"); }
+    }
+
+    async function loadFromHandle(handle) {
+      const file = await handle.getFile();
+      ingest(await file.text(), file.name, handle);
+      el("reconnect").classList.add("hidden");
+    }
+
+    function openHandleDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("stt-viewer", 1);
+        request.onupgradeneeded = () => request.result.createObjectStore("handles");
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function storeHandle(handle) {
+      if (!isLocalhost || !("indexedDB" in window)) return;
+      try {
+        const database = await openHandleDatabase();
+        await new Promise((resolve, reject) => {
+          const request = database.transaction("handles", "readwrite").objectStore("handles").put(handle, "testcases");
+          request.onsuccess = resolve; request.onerror = () => reject(request.error);
+        });
+        database.close();
+      } catch (error) { /* 記不住就算了 */ }
+    }
+
+    async function restoreHandle() {
+      if (!isLocalhost || !("indexedDB" in window)) return false;
+      try {
+        const database = await openHandleDatabase();
+        const handle = await new Promise((resolve, reject) => {
+          const request = database.transaction("handles").objectStore("handles").get("testcases");
+          request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+        });
+        database.close();
+        if (!handle) return false;
+        if (await handle.queryPermission({mode:"read"}) === "granted") { await loadFromHandle(handle); return true; }
+        currentHandle = handle;
+        el("reconnect").classList.remove("hidden");
+        el("emptyState").querySelector(".card").insertAdjacentHTML("beforeend", `<div class="hint muted">上次開過 <b>${escapeHtml(handle.name)}</b>，點「載入 JSON」重新授權。</div>`);
+        return false;
+      } catch (error) { return false; }
+    }
+
+    async function loadFromQuery() {
+      const src = new URLSearchParams(location.search).get("src");
+      if (!src || location.protocol === "file:") return false;
+      try {
+        const response = await fetch(src);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        ingest(await response.text(), src.split("/").pop());
+        return true;
+      } catch (error) { toast(`無法載入 ${src}：${error.message}`, "error"); return false; }
+    }
+
+    /* ========== 全域事件 ========== */
+    el("openEmpty").onclick = openJsonFile;
+    el("openFile").onclick = openJsonFile;
+    el("reconnect").onclick = async () => {
+      if (!currentHandle) return;
+      if (await currentHandle.requestPermission({mode:"read"}) === "granted") await loadFromHandle(currentHandle);
+    };
+    el("fileInput").onchange = async event => {
+      const file = event.target.files[0];
+      if (file) ingest(await file.text(), file.name);
+      event.target.value = "";
+    };
+    el("searchToggle").onclick = () => toggleSearch();
+    el("search").oninput = () => data && renderView();
+    el("statusPill").onclick = () => el("findingsDrawer").classList.toggle("hidden");
+    el("navBack").onclick = () => travel(-1);
+    el("navForward").onclick = () => travel(1);
+    el("drawerClose").onclick = () => closeDrawer();
+    el("drawerLocate").onclick = () => {
+      if (!selectedId) return;
+      if (recordFor(selectedId)?.collection === "uiControls") locateInUi(selectedId); else locateInRtm(selectedId);
+    };
+    el("helpToggle").onclick = () => el("helpBackdrop").classList.toggle("hidden");
+    el("helpClose").onclick = () => el("helpBackdrop").classList.add("hidden");
+    el("helpBackdrop").onclick = event => { if (event.target === el("helpBackdrop")) el("helpBackdrop").classList.add("hidden"); };
+
+    window.addEventListener("dragenter", event => { event.preventDefault(); dragDepth++; el("dropzone").classList.remove("hidden"); });
+    window.addEventListener("dragover", event => event.preventDefault());
+    window.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; el("dropzone").classList.add("hidden"); } });
+    window.addEventListener("drop", async event => {
+      event.preventDefault();
+      dragDepth = 0;
+      el("dropzone").classList.add("hidden");
+      const item = event.dataTransfer.items?.[0];
+      if (item && "getAsFileSystemHandle" in item) {
+        const handle = await item.getAsFileSystemHandle();
+        if (handle?.kind === "file") { await loadFromHandle(handle); if (isLocalhost) await storeHandle(handle); return; }
+      }
+      const file = event.dataTransfer.files[0];
+      if (file) ingest(await file.text(), file.name);
+    });
+
+    window.addEventListener("popstate", event => {
+      if (!data) return;
+      const position = event.state?.navPos;
+      if (typeof position === "number" && navStack[position]) { navPos = position; applyNav(navStack[navPos]); return; }
+      const target = parseHash();
+      if (target.view || target.id) {
+        navPos = navStack.length;
+        navStack.push({view:target.view || activeView, id:target.id});
+        applyNav(navStack[navPos]);
+      }
+    });
+
+    window.addEventListener("resize", () => { hideHoverCard(); layoutSpines(); layoutScrollers(); });
+    window.addEventListener("scroll", hideHoverCard, true);
+    if ("ResizeObserver" in window) new ResizeObserver(() => layoutScrollers()).observe(el("topbar"));
+
+    document.addEventListener("keydown", event => {
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName);
+      if (event.altKey && event.key === "ArrowLeft") { event.preventDefault(); travel(-1); return; }
+      if (event.altKey && event.key === "ArrowRight") { event.preventDefault(); travel(1); return; }
+      if (event.key === "Escape") {
+        hideHoverCard();
+        if (!el("helpBackdrop").classList.contains("hidden")) { el("helpBackdrop").classList.add("hidden"); return; }
+        if (el("drawer").classList.contains("open")) { closeDrawer(); return; }
+        if (!el("search").classList.contains("hidden")) { toggleSearch(false); return; }
+        el("findingsDrawer").classList.add("hidden");
+        return;
+      }
+      if (typing || event.metaKey || event.ctrlKey || event.altKey || !data) return;
+      if (event.key === "/") { event.preventDefault(); toggleSearch(true); return; }
+      if (event.key === "?") { event.preventDefault(); el("helpBackdrop").classList.toggle("hidden"); return; }
+      const index = Number(event.key);
+      if (Number.isInteger(index) && index >= 1 && index <= VIEWS.length) { event.preventDefault(); switchView(VIEWS[index - 1][0]); }
+    });
+
+    render();
+    (async () => { if (!(await loadFromQuery())) await restoreHandle(); })();
+  </script>
+</body>
+</html>
